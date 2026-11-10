@@ -22,13 +22,13 @@ This ledger records GenLayer Studio transaction details supplied by the operator
 | Adjudication status | FINALIZED; GenVM SUCCESS; consensus Accepted; 5 initial validators |
 | Equivalence Principle output | Verdict `ACCEPT` |
 | AI reason in explorer | "The delivery accurately calculates all subtotals (30, 60, 10) and the grand total (100) as specified in the source rows and terms." |
-| Final `get_case` readback | **Pending** — operator must confirm `status: DECIDED`, `verdict: ACCEPT`, and nonempty `reason` |
+| Final `get_case` readback | **Confirmed:** `status: DECIDED`, `verdict: ACCEPT`, `reason` persisted and matches the adjudication output; operator-supplied readback transcript |
 
-**Evidence boundary:** The `ACCEPT` verdict was reported in the adjudication's Equivalence Principle output, with successful execution and finality. The persisted state has **not yet** been read back after adjudication. `Consensus Result: Accepted` is a transaction-level consensus status; the actual contract decision is `verdict: ACCEPT`. The explorer reports five **initial** validators, not a detailed count of independent matching votes.
+**Evidence boundary:** The `ACCEPT` verdict was reported in the adjudication's Equivalence Principle output, with successful execution and finality. The operator then supplied `get_case` readback with `DECIDED`, `ACCEPT`, and a reason matching the adjudication output, confirming persistent contract state as observed in Studio. `Consensus Result: Accepted` is a transaction-level consensus status; the actual contract decision is `verdict: ACCEPT`. The explorer reports five **initial** validators, not a detailed count of independent matching votes. This is a synthetic fixture and not evidence of authenticated OpenServ task sync.
 
 ## Remaining acceptance sequence
 
-1. `get_case("SJ-INV-20261110-A")` → capture `DECIDED` and actual persisted `verdict` / `reason`.
+1. **Completed:** `get_case("SJ-INV-20261110-A")` returned `DECIDED`, `ACCEPT`, and the persisted explanation.
 2. Use [Studio run card](STUDIO_RUN_NOW.md) to file and adjudicate Case B (intended `REWORK`) and Case C (intended `UNVERIFIABLE`); record **actual** results.
 3. Perform negative tests for duplicate filing and duplicate adjudication (the calls should fail).
 4. Demonstrate authenticated OpenServ task creation/writeback separately; Studio-only fixture transactions do not prove OpenServ integration.
