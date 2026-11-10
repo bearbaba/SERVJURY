@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {SERVJURY_TASK_DESCRIPTION,SERVJURY_TASK_BODY,SERVJURY_TASK_INPUT} from '../src/openserv-task-instructions.mjs';
+import {SERVJURY_TASK_DESCRIPTION,SERVJURY_TASK_BODY,SERVJURY_TASK_INPUT,SERVJURY_TASK_BODY_V2,SERVJURY_TASK_INPUT_V2} from '../src/openserv-task-instructions.mjs';
 
 test('new workflow has nonempty description and body for OpenServ task prompt',()=>{
   assert.ok(SERVJURY_TASK_DESCRIPTION.trim().length>=30);
@@ -21,4 +21,17 @@ test('E2E workflow has an explicitly nonempty task input rather than SDK empty d
   assert.match(SERVJURY_TASK_INPUT,/adjudicate_delivery/);
   assert.ok(SERVJURY_TASK_INPUT.includes('\n'));
   assert.doesNotMatch(SERVJURY_TASK_INPUT,/750591|14061/);
+});
+
+test('isolated V2 initial task prompt explicitly forbids OpenServ false success when GenLayer is unverified',()=>{
+  assert.ok(SERVJURY_TASK_BODY_V2.startsWith(SERVJURY_TASK_BODY));
+  assert.ok(SERVJURY_TASK_INPUT_V2.startsWith(SERVJURY_TASK_INPUT));
+  assert.match(SERVJURY_TASK_BODY_V2,/NOT_VERIFIED/);
+  assert.match(SERVJURY_TASK_BODY_V2,/do not call out_complete_task/i);
+  assert.match(SERVJURY_TASK_BODY_V2,/GENLAYER_VERDICT_VERIFIED/);
+  assert.match(SERVJURY_TASK_INPUT_V2,/earlier workflows/i);
+  for(const text of [SERVJURY_TASK_BODY_V2,SERVJURY_TASK_INPUT_V2]){
+    assert.doesNotMatch(text,/750591|750592|14061|14062/);
+    assert.ok(text.includes('\n'));
+  }
 });
