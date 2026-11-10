@@ -2,13 +2,13 @@
 
 **When agents disagree, let the evidence decide.**
 
-**Run a real partner task:** [Open the browser-first OpenServ task run card](docs/RUN_OPENSERV_TASK_NOW.md) — Codespaces, a dedicated testnet signer, one-shot webhook, and task-log readback. The live partner round trip is not yet accepted.
+**Live partner evidence (10 Nov 2026):** Authenticated OpenServ task **750591** reached GenLayer Studionet, which stored **DECIDED / REWORK**; the original OpenServ Task Logs display the authenticated receipt **`servjury-2a9e57000de6303a`**. OpenServ **did not complete the task**: Human Assistance recovery failed with `AI_InvalidPromptError: messages must not be empty`. [Verified evidence and recovery status](docs/NEXT_STEPS_AFTER_OPENSERV_AI_ERROR.md). Do not replay the existing task.
 
-**On-chain acceptance:** [Three finalized GenLayer verdicts and stored readbacks](docs/ONCHAIN_EVIDENCE.md) — **ACCEPT / REWORK / UNVERIFIABLE** at [`0x7040Db57…abB3c2B5`](https://explorer-studio.genlayer.com/address/0x7040Db57D130C9c121Ad7152143b5076abB3c2B5). The OpenServ partner writeback remains a separate integration gate: [run and verify it](docs/OPENSERV_LIVE_ACCEPTANCE.md).
+**On-chain acceptance:** [Three finalized GenLayer verdicts and stored readbacks](docs/ONCHAIN_EVIDENCE.md) — **ACCEPT / REWORK / UNVERIFIABLE** at [`0x7040Db57…abB3c2B5`](https://explorer-studio.genlayer.com/address/0x7040Db57D130C9c121Ad7152143b5076abB3c2B5). A real OpenServ task-log writeback is verified; workflow completion remains an open acceptance gate: [recovery status](docs/NEXT_STEPS_AFTER_OPENSERV_AI_ERROR.md).
 
 An Internet Court × **OpenServ** × **GenLayer** partner demo: an OpenServ agent can file a delivery dispute under fixed task terms, submit the deliverable and supporting evidence to a GenLayer Intelligent Contract, receive an independently validated verdict, and append that result to the original OpenServ task log.
 
-![Status](https://img.shields.io/badge/local_demo-tested-8fa) ![Onchain](https://img.shields.io/badge/GenLayer-3_cases_finalized_success-8fa) ![Partner](https://img.shields.io/badge/OpenServ-SDK_adapter-a89af4)
+![Status](https://img.shields.io/badge/local_demo-tested-8fa) ![Onchain](https://img.shields.io/badge/GenLayer-3_cases_finalized_success-8fa) ![Partner](https://img.shields.io/badge/OpenServ-task_log_verified-8fa)
 
 ### What it actually does
 
@@ -95,11 +95,11 @@ ALLOW_FIRST_FILING=1 npm run agent
 
 The OpenServ SDK can provision an agent and a webhook workflow using its documented tunnel. Consult official [OpenServ SDK skill](https://github.com/openserv-labs/skills/blob/main/skills/openserv-agent-sdk/SKILL.md). A real invocation should include `terms`, `delivery`, `evidence` arguments; the task identity comes from OpenServ's authenticated action. Review your wallet funding and network settings before authorizing signed transactions. The agent never moves funds, never auto-retries an unknown write, and does not fake a successful verdict.
 
-**Real partner acceptance is still required:** the bridge has isolated fail-closed tests and follows the documented OpenServ SDK APIs, but authenticated provisioning, signed task-linked GenLayer writes, and OpenServ `addLogToTask` readback have not been exercised here. [Use the actual-partner acceptance checklist](docs/OPENSERV_LIVE_ACCEPTANCE.md). Do not share wallet keys or platform credentials in GitHub or chat.
+**Current live acceptance status:** authenticated provisioning, task-linked GenLayer case writes and readback, and task-log receipt display have been observed for task **750591**. The associated OpenServ task is **not Completed**; Human Assistance recovery failed with `AI_InvalidPromptError`. The GenLayer `adjudicate_case` TX is FINALIZED but has mixed GenVM leader receipts (SUCCESS/ERROR), so unanimous execution success must not be claimed. Do not repeat this task or handoff. [See recorded evidence](docs/LIVE_STUDIONET_CASE_750591.md) and [next steps](docs/NEXT_STEPS_AFTER_OPENSERV_AI_ERROR.md).
 
 ## 5 — Public source repository
 
-Source, contract, skill, test suite and interface are maintained at **[github.com/bearbaba/SERVJURY](https://github.com/bearbaba/SERVJURY)**. The repository is public. GenLayer Studio **three-way on-chain adjudication** is evidenced by operator-supplied transaction details and persisted `get_case` readbacks: [ACCEPT, REWORK and UNVERIFIABLE](docs/ONCHAIN_EVIDENCE.md). **Authenticated OpenServ task-log acceptance remains unverified**, and none of the offline demo fixtures should be represented as partner synchronization.
+Source, contract, skill, test suite and interface are maintained at **[github.com/bearbaba/SERVJURY](https://github.com/bearbaba/SERVJURY)**. The repository is public. GenLayer Studio **three-way on-chain adjudication** is evidenced by operator-supplied transaction details and persisted `get_case` readbacks: [ACCEPT, REWORK and UNVERIFIABLE](docs/ONCHAIN_EVIDENCE.md). **An authenticated OpenServ receipt is visible in Task 750591 logs**; however the session remains incomplete due to an OpenServ AI context error. The earlier standalone Studio fixtures must not be represented as authenticated partner synchronization.
 
 ## 6 — Capture mission evidence
 
