@@ -12,7 +12,7 @@ if(!/^0x[0-9a-fA-F]{40}$/.test(address)||studionet.id!==61999) throw Error('Inco
 const client=createClient({chain:studionet,account:createAccount('0x'+'11'.repeat(32))});
 let result;
 try {
-  result=await client.request({method:'sim_getTransactionsForAddress',params:[address,'to']});
+  result=await client.request({method:'sim_getTransactionsForAddress',params:[address]});
 } catch(error) {
   const code=Number(error?.code ?? error?.cause?.code ?? 0);
   console.log('GENLAYER_ADDRESS_HISTORY_UNAVAILABLE',JSON.stringify({rpcCode:Number.isFinite(code)&&code!==0 ? code:null}));
