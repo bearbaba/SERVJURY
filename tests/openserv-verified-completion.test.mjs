@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {caseIdForTask,publicTaskRef} from '../src/openserv-bridge.mjs';
 import {buildVerifiedTaskOutput,confirmCompletedTask} from '../src/openserv-verified-completion.mjs';
-import {selectOpenServProfile,allowsVerifiedTaskCompletion} from '../src/openserv-profiles.mjs';
+import {selectOpenServProfile,requireActiveProfile,allowsVerifiedTaskCompletion} from '../src/openserv-profiles.mjs';
 const ctx={workflowId:28801,taskId:88801};
 const receipt={
   caseId:caseIdForTask(ctx.workflowId,ctx.taskId),
@@ -37,16 +37,23 @@ test('status DONE is not accepted without a matching persisted task output',()=>
     assert.throws(()=>confirmCompletedTask(detail,{...ctx,output}),/not confirmed/);
   }
 });
-test('legacy profile never enables completeTask; E2E profile requires explicit opt-in',()=>{
+test('legacy and E2E V1 cannot complete; E2E V2 only enables completion after explicit opt-in',()=>{
   const legacy=selectOpenServProfile({});
-  const isolated=selectOpenServProfile({SERVJURY_AGENT_PROFILE:'e2e'});
+  const archive=selectOpenServProfile({SERVJURY_AGENT_PROFILE:'e2e'});
+  const next=selectOpenServProfile({SERVJURY_AGENT_PROFILE:'e2e-v2'});
   assert.equal(legacy.id,'legacy');
-  assert.equal(isolated.id,'e2e');
-  assert.notEqual(legacy.workflowName,isolated.workflowName);
-  assert.notEqual(legacy.agentName,isolated.agentName);
+  assert.equal(archive.id,'e2e');
+  assert.equal(next.id,'e2e-v2');
+  assert.notEqual(next.workflowName,archive.workflowName);
+  assert.notEqual(next.agentName,archive.agentName);
+  assert.notEqual(next.workflowName,legacy.workflowName);
+  assert.notEqual(next.agentName,legacy.agentName);
+  assert.throws(()=>requireActiveProfile(archive),/frozen/);
+  assert.equal(requireActiveProfile(next),next);
   assert.equal(allowsVerifiedTaskCompletion(legacy,{SERVJURY_COMPLETE_VERIFIED_TASK:'1'}),false);
-  assert.equal(allowsVerifiedTaskCompletion(isolated,{}),false);
-  assert.equal(allowsVerifiedTaskCompletion(isolated,{SERVJURY_COMPLETE_VERIFIED_TASK:'1'}),true);
+  assert.equal(allowsVerifiedTaskCompletion(archive,{SERVJURY_COMPLETE_VERIFIED_TASK:'1'}),false);
+  assert.equal(allowsVerifiedTaskCompletion(next,{}),false);
+  assert.equal(allowsVerifiedTaskCompletion(next,{SERVJURY_COMPLETE_VERIFIED_TASK:'1'}),true);
   assert.throws(()=>selectOpenServProfile({SERVJURY_COMPLETE_VERIFIED_TASK:'1'}),/forbidden/);
   assert.throws(()=>selectOpenServProfile({SERVJURY_AGENT_PROFILE:'unreviewed'}),/Unknown/);
 });
