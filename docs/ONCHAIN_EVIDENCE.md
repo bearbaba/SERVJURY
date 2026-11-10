@@ -49,7 +49,11 @@ Avoid converting expected outcomes into observed results.
 | Finality / GenVM | FINALIZED / SUCCESS |
 | Transaction consensus | Accepted; 5 initial validators |
 | Fixture details | Source total USD 100; delivered total USD 130; wrong subtotal for INV-B |
-| Adjudication | Not yet executed in evidence supplied |
-| Expected (not observed) verdict | `REWORK` |
+| Adjudication transaction | [`0x95b6c7d7c840b1b4f1fae7eefe090f26ffc010b93ffda7b92e59bc12bd99a427`](https://explorer-studio.genlayer.com/tx/0x95b6c7d7c840b1b4f1fae7eefe090f26ffc010b93ffda7b92e59bc12bd99a427) |
+| Adjudication time | Nov 10, 2026 2:53:36 PM (explorer display time) |
+| Adjudication result | FINALIZED; GenVM SUCCESS; consensus Accepted; 5 initial validators |
+| Actual AI verdict | `REWORK` |
+| Persisted `get_case` readback | `DECIDED`, `REWORK`, matching nonempty reason (operator-supplied) |
+| Reason | INV-B USD 90 instead of required USD 60; total USD 130 instead of USD 100 |
 
-This filing does **not** prove the jury verdict or OpenServ integration. Next: `adjudicate_case("SJ-INV-20261110-B")`, followed by `get_case` persisted state readback.
+The operator-supplied adjudication transaction and subsequent readback confirm a persisted `REWORK` verdict for this synthetic fixture. This does **not** prove authenticated OpenServ integration or count how many individual validators agreed. Note that the Case B evidence explicitly included the correct answer, so additional blind-evidence/adversarial testing would strengthen evaluation.
