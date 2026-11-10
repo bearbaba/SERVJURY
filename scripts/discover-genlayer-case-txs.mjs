@@ -5,9 +5,19 @@
 import {createClient, createAccount} from 'genlayer-js';
 import {studionet} from 'genlayer-js/chains';
 import {provenGenVMExecutionName} from '../src/genlayer-tx-status.mjs';
+import {caseIdForTask} from '../src/openserv-bridge.mjs';
 
 const address=process.env.GENLAYER_CONTRACT_ADDRESS || '0x7040Db57D130C9c121Ad7152143b5076abB3c2B5';
-const caseId='sj_745eae3d3d0921304a80ec55';
+const workflowId=process.env.OPENSERV_WORKFLOW_ID ? Number(process.env.OPENSERV_WORKFLOW_ID) : null;
+const taskId=process.env.OPENSERV_TASK_ID ? Number(process.env.OPENSERV_TASK_ID) : null;
+if((workflowId!==null || taskId!==null) &&
+   (!Number.isSafeInteger(workflowId)||workflowId<=0||
+    !Number.isSafeInteger(taskId)||taskId<=0)) {
+  throw Error('Both valid OPENSERV_WORKFLOW_ID and OPENSERV_TASK_ID are required for a scoped read-only case-history audit');
+}
+const caseId=workflowId!==null && taskId!==null
+  ? caseIdForTask(workflowId,taskId)
+  : 'sj_745eae3d3d0921304a80ec55';
 if(!/^0x[0-9a-fA-F]{40}$/.test(address)||studionet.id!==61999) throw Error('Incorrect Studionet contract');
 const client=createClient({chain:studionet,account:createAccount('0x'+'11'.repeat(32))});
 let result;
@@ -21,7 +31,7 @@ try {
 }
 const list=Array.isArray(result)?result:Array.isArray(result?.transactions)?result.transactions:Array.isArray(result?.items)?result.items:null;
 if(!list){console.log('GENLAYER_ADDRESS_HISTORY_UNKNOWN_SHAPE');process.exit(0);}
-console.log('GENLAYER_ADDRESS_HISTORY_READ',JSON.stringify({count:list.length,inspectedAtMost:80}));
+console.log('GENLAYER_ADDRESS_HISTORY_READ',JSON.stringify({count:list.length,inspectedAtMost:80,caseId,workflowId,taskId}));
 const selected=list.slice(-80);
 let matches=0;
 for(const summary of selected){
@@ -45,7 +55,7 @@ for(const summary of selected){
   const executionValues=Array.isArray(tx?.consensus_data?.leader_receipt)
     ? tx.consensus_data.leader_receipt.map(x=>String(x?.execution_result||'UNKNOWN').toUpperCase()).slice(0,8)
     : [];
-  if(!caseMatch && method!=='adjudicate_case')continue;
+  if(!caseMatch)continue; // never conflate unrelated case adjudications with the target
   matches++;
   console.log('GENLAYER_CASE_TRANSACTION',JSON.stringify({
     hash,caseMatched:caseMatch,
@@ -58,5 +68,5 @@ for(const summary of selected){
     execution:provenGenVMExecutionName(tx)||'UNCONFIRMED',
   }));
 }
-if(matches===0)console.log('NO_MATCH_FOUND_IN_INSPECTED_HISTORY; not proof adjudication did not happen.');
+if(matches===0)console.log('NO_CASE_TRANSACTION_MATCH_IN_INSPECTED_HISTORY; not proof adjudication did not happen.');
 console.log('READ_ONLY: no GenLayer transaction signed or OpenServ task modified.');
