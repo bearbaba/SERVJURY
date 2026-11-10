@@ -53,6 +53,9 @@ jobs:
       - name: Read existing finalized SERVJURY case from Studionet (read-only)
         timeout-minutes: 2
         run: node scripts/studionet-preflight.mjs
+      - name: Calibrate absent GenLayer case on live RPC (no signatures)
+        timeout-minutes: 2
+        run: node scripts/studionet-unknown-case-preflight.mjs
       - name: Verify actual package exports without credentials
         run: |
           node --input-type=module -e "import { Agent, run } from '@openserv-labs/sdk'; import { provision, triggers } from '@openserv-labs/client'; if (![Agent,run,provision,triggers.webhook].every(x => typeof x === 'function')) process.exit(1)"
