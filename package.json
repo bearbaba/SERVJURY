@@ -22,6 +22,6 @@
     "node": ">=22"
   },
   "overrides": {
-    "zod": "$zod"
+    "zod": "4.6.7"
   }
 }
