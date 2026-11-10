@@ -40,8 +40,12 @@ export function verifyLivePlatformTask(task, { taskId, agentId, expectedDescript
       typeof task.description==='string' && task.description !== expectedDescription) {
     throw Error('Authenticated OpenServ task description mismatch; refusing signed review.');
   }
-  if(['cancelled','done','human-assistance-required'].includes(String(task.status||'').toLowerCase())) {
-    throw Error('OpenServ task already terminal; refusing new signed review.');
+  // Only known runnable statuses can initiate a new GenLayer signature.
+  // The platform can surface 'unexpected-error' after AI_InvalidPromptError
+  // during Human Assistance recovery. This must NEVER become a signed retry.
+  const status=String(task.status||'').trim().toLowerCase();
+  if (!['to-do','in-progress'].includes(status)) {
+    throw Error('OpenServ task not in a known runnable status; refusing new signed review.');
   }
   return true;
 }
