@@ -49,6 +49,7 @@ agent.addCapability({
 
 const provisioned = await provision({
   agent: {
+    instance: agent,
     name: 'SERVJURY — Internet Court Review',
     description: 'OpenServ delivery disputes are adjudicated on GenLayer by AI validators with auditable task readback.',
   },
@@ -66,8 +67,11 @@ const provisioned = await provision({
     task: { description: 'Use adjudicate_delivery to return a finalized GenLayer verdict to the original task log.' },
   },
 });
-// The current OpenServ SDK supports local tunneling; passing the returned key
-// prevents a mismatch between the provisioned agent and the active tunnel.
-const apiKey = process.env.OPENSERV_API_KEY || provisioned.apiKey;
-if (!apiKey) throw new Error('OpenServ provisioning did not return a usable agent key.');
-await run(agent, { tunnel: { apiKey } });
+// Agent instance binding attaches the provisioned API key and auth token.
+// run(agent) is the documented OpenServ tunnel API for this SDK version.
+// Do not print provisioned.apiKey, authToken, wallet keys or webhook tokens.
+if (!provisioned?.agentId || !provisioned?.workflowId) {
+  throw new Error('OpenServ provisioning did not return agent and workflow IDs.');
+}
+console.log(`SERVJURY OpenServ provisioned: agentId=${provisioned.agentId}, workflowId=${provisioned.workflowId}`);
+await run(agent);
