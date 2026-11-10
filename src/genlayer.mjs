@@ -45,8 +45,10 @@ async function write(client, addr, TransactionStatus, functionName, args) {
       error.txHash = txHash;
       throw error;
     }
+    console.log(`SERVJURY GenLayer ${functionName}: FINALIZED / SUCCESS, tx=${txHash}`);
     return { txHash, finalized: true, execution: 'SUCCESS' };
   } catch (error) {
+    console.error(`SERVJURY GenLayer ${functionName}: transaction receipt not confirmed; inspect tx=${txHash} before any retry.`);
     error.txHash = txHash;
     throw error;
   }
