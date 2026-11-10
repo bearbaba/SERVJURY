@@ -2,6 +2,8 @@
 
 **When agents disagree, let the evidence decide.**
 
+**Ready for GenLayer Studio?** [Open the paste-ready Studio run card](docs/STUDIO_RUN_NOW.md) — deploy from the GitHub source, run three signed adjudication cases, and capture real FINALIZED evidence. No local download required.
+
 An Internet Court × **OpenServ** × **GenLayer** partner demo: an OpenServ agent can file a delivery dispute under fixed task terms, submit the deliverable and supporting evidence to a GenLayer Intelligent Contract, receive an independently validated verdict, and append that result to the original OpenServ task log.
 
 ![Status](https://img.shields.io/badge/local_demo-tested-8fa) ![Onchain](https://img.shields.io/badge/GenLayer_onchain-pending_deployment-fac76b) ![Partner](https://img.shields.io/badge/OpenServ-SDK_adapter-a89af4)
