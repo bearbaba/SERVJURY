@@ -1,8 +1,8 @@
 // Authenticated OpenServ capability. Do not confuse its SDK task context with
 // synthetic Studio fixture task IDs. No funds, escrow or automatic payouts.
 import { Agent, run } from '@openserv-labs/sdk';
-import { writeFileSync } from 'node:fs';
-import { PlatformClient, provision, triggers } from '@openserv-labs/client';
+import { PlatformClient, provision, triggers, setLogger } from '@openserv-labs/client';
+import { safeProvisionLogger } from '../src/openserv-safe-logging.mjs';
 import { requireOpenServUserApiKey, explainPlatformAuthError } from '../src/openserv-auth.mjs';
 import { z } from 'zod';
 import { fileLiveCase, judgeLiveCase, readLiveCase } from '../src/genlayer.mjs';
@@ -62,6 +62,10 @@ try {
   process.exit(1);
 }
 
+// OpenServ's default provisioning logger prints private webhook tokens. Redact
+// them before any future registration or re-provisioning log reaches a terminal.
+setLogger(safeProvisionLogger());
+
 let provisioned;
 try {
   provisioned = await provision({
@@ -96,19 +100,10 @@ if (!provisioned?.agentId || !provisioned?.workflowId) {
   throw new Error('OpenServ provisioning did not return agent and workflow IDs.');
 }
 console.log(`SERVJURY OpenServ provisioned: agentId=${provisioned.agentId}, workflowId=${provisioned.workflowId}`);
-// Store the webhook URL locally (never in logs or Git) for safe one-shot task
-// triggering. Preserve the private per-workflow token.
-const endpoint = provisioned.apiEndpoint || (provisioned.triggerToken
-  ? `https://api.openserv.ai/webhooks/trigger/${provisioned.triggerToken}`
-  : null);
-if (endpoint) {
-  const parsed = new URL(endpoint);
-  if (parsed.protocol === 'https:' && parsed.hostname === 'api.openserv.ai'
-      && /^\/webhooks\/trigger\/[a-zA-Z0-9_-]+\/?$/.test(parsed.pathname)) {
-    writeFileSync('.openserv-trigger-url', parsed.toString(), { mode: 0o600 });
-    console.log('OpenServ webhook URL saved privately to .openserv-trigger-url (gitignored).');
-  } else {
-    console.warn('Unexpected OpenServ webhook URL format; use the trigger URL in your OpenServ dashboard.');
-  }
-}
+// The platform returned a workflowId. Use its API key-authenticated trigger
+// discovery via TriggersAPI; never print or save its webhook token in a text
+// file. OpenServ's current apiEndpoint is /workspaces/:id/triggers/:id/fire,
+// which is not the token URL expected by the older launcher. The launcher
+// instead uses the workspaceId stored in the gitignored .openserv.json.
+console.log('OpenServ provisioning completed; trigger token intentionally hidden.');
 await run(agent);
