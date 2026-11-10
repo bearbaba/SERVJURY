@@ -1,7 +1,6 @@
 // Trigger exactly one REAL OpenServ webhook task using documented client API.
 // Does not create a synthetic workspace ID; OpenServ supplies task context.
 // The webhook URL contains a bearer-like token. Never print, commit or paste it.
-import { PlatformClient } from '@openserv-labs/client';
 import { existsSync, readFileSync } from 'node:fs';
 
 const isExecute = process.argv.includes('--execute');
@@ -29,6 +28,7 @@ if (url.protocol !== 'https:' || url.hostname !== 'api.openserv.ai' || !/^\/webh
   throw new Error('Only the canonical OpenServ https webhook URL is accepted');
 }
 if (url.username || url.password || url.search || url.hash) throw new Error('Unexpected credentials, query or fragment in webhook URL');
+const { PlatformClient } = await import('@openserv-labs/client');
 const client = new PlatformClient();
 try {
   const response = await client.triggers.fireWebhook({ triggerUrl: url.toString(), input: scenario });
