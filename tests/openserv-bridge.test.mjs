@@ -1,11 +1,20 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { caseIdForTask, isUnknownCaseError, verifyStoredCase, verifiedReceipt, runTaskReview } from '../src/openserv-bridge.mjs';
+import { caseIdForTask, publicTaskRef, isUnknownCaseError, verifyStoredCase, verifiedReceipt, runTaskReview } from '../src/openserv-bridge.mjs';
 
 const input = { taskId: '42', terms: 'Give a dated, sourced report', delivery: 'Report A', evidence: 'Citation X' };
-const stored = { task_id: '42', terms: input.terms, delivery: input.delivery, evidence: input.evidence, status: 'FILED', verdict: 'PENDING', reason: '' };
+const stored = { task_id: publicTaskRef(7,42), terms: input.terms, delivery: input.delivery, evidence: input.evidence, status: 'FILED', verdict: 'PENDING', reason: '' };
 const decided = { ...stored, status: 'DECIDED', verdict: 'ACCEPT', reason: 'All terms backed by the source.' };
 
+test('public on-chain task reference cannot reveal OpenServ session/update tokens', () => {
+  const privateWorkspace = 'workspace-secret-uuid';
+  const privateTask = 'task-secret-uuid';
+  const ref = publicTaskRef(privateWorkspace, privateTask);
+  assert.match(ref, /^os_[0-9a-f]{32}$/);
+  assert.doesNotMatch(ref,/secret|uuid/);
+  assert.notEqual(ref, privateTask);
+  assert.notEqual(publicTaskRef(privateWorkspace,privateTask),publicTaskRef(privateWorkspace,privateTask+'-other'));
+});
 test('stable case identity is scoped to both OpenServ workspace and task', () => {
   assert.equal(caseIdForTask(7, 42), caseIdForTask('7', '42'));
   assert.notEqual(caseIdForTask(7, 42), caseIdForTask(8, 42));
@@ -26,10 +35,10 @@ test('first filing then adjudication returns a real readback receipt', async () 
   let current = null; let filed = 0; let judged = 0;
   const result = await runTaskReview({workspaceId:7,taskId:42,input,allowFirstFiling:true,
     readCase:async()=>{if(!current) throw Error('Unknown case'); return current;},
-    fileCase:async()=>{filed++;current={...stored};return {txHash:'0xf'}} ,
+    fileCase:async(caseId,publicInput)=>{assert.equal(publicInput.taskId,publicTaskRef(7,42)); filed++;current={...stored};return {txHash:'0xf'}} ,
     judgeCase:async()=>{judged++;current={...decided};return {txHash:'0xabc'}}});
   assert.equal(filed,1);assert.equal(judged,1);
-  assert.equal(result.verdict,'ACCEPT');assert.equal(result.filingTxHash,'0xf');assert.equal(result.adjudicationTxHash,'0xabc');
+  assert.equal(result.verdict,'ACCEPT');assert.equal(result.taskId,publicTaskRef(7,42));assert.equal(result.filingTxHash,'0xf');assert.equal(result.adjudicationTxHash,'0xabc');
   assert.match(result.receiptId,/^servjury-/);
 });
 test('existing case never refiles nor rejudges after DECIDED', async () => {
