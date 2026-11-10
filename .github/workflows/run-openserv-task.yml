@@ -1,0 +1,41 @@
+name: Run one real OpenServ demo task
+
+on:
+  workflow_dispatch:
+    inputs:
+      consent:
+        description: 'Type RUN_ONE_TEST_TASK to trigger a single external OpenServ task'
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  fire-openserv-webhook:
+    # Never run automatically on push. Does NOT host the OpenServ agent.
+    if: ${{ inputs.consent == 'RUN_ONE_TEST_TASK' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      OPENSERV_WEBHOOK_URL: ${{ secrets.OPENSERV_WEBHOOK_URL }}
+      SERVJURY_CONFIRM_TASK: RUN_ONE_TEST_TASK
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Require an existing OpenServ webhook secret
+        shell: bash
+        run: |
+          if [ -z "$OPENSERV_WEBHOOK_URL" ]; then
+            echo "::error::Set OPENSERV_WEBHOOK_URL in repository Actions secrets first. Do not paste it into workflow inputs."
+            exit 1
+          fi
+      - name: Install official OpenServ client
+        run: npm install --ignore-scripts --no-audit --no-fund
+      - name: Trigger exactly one authorized task
+        run: npm run task:openserv -- --execute
+      - name: Next verification step
+        run: |
+          echo 'Request sent to OpenServ. Review its real task/workspace and validate the GenLayer adjudication and task log before claiming success.'
