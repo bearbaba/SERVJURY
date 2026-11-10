@@ -4,10 +4,10 @@
 import { open } from 'node:fs/promises';
 import { requireOpenServUserApiKey } from '../src/openserv-auth.mjs';
 import { summarizeTriggerResult } from '../src/openserv-trigger-result.mjs';
-import { selectOpenServProfile } from '../src/openserv-profiles.mjs';
+import { selectOpenServProfile,requireActiveProfile } from '../src/openserv-profiles.mjs';
 
 const isExecute = process.argv.includes('--execute');
-const profile = selectOpenServProfile();
+const profile = requireActiveProfile(selectOpenServProfile());
 const scenario = Object.freeze({
   terms: 'For a fictitious invoice audit, calculate subtotals and total using source rows: INV-A quantity 2 at USD 15, INV-B quantity 3 at USD 20, INV-C quantity 1 at USD 10. Include all three IDs and the grand total.',
   delivery: 'INV-A USD 30; INV-B USD 90; INV-C USD 10; grand total USD 130.',
@@ -19,11 +19,11 @@ console.log('Scenario: contest the incorrect INV-B subtotal without providing th
 console.log('No wallet key, webhook token, synthetic task ID or payment is printed.');
 if (!isExecute) {
   console.log('DRY RUN ONLY. No OpenServ request or GenLayer transaction sent.');
-  console.log('To create ONE NEW isolated E2E task, use SERVJURY_AGENT_PROFILE=e2e and the dedicated E2E workflow. The legacy workflow cannot be triggered by this script.');
+  console.log('To create ONE NEW isolated E2E task, use SERVJURY_AGENT_PROFILE=e2e-v2 and the dedicated E2E V2 workflow. The legacy workflow cannot be triggered by this script.');
   process.exit(0);
 }
-if (profile.id!=='e2e') {
-  throw new Error('Refusing to trigger legacy OpenServ workflow, including the already-decided Task 750591. Set SERVJURY_AGENT_PROFILE=e2e to use a separately provisioned E2E workflow.');
+if (profile.id!=='e2e-v2') {
+  throw new Error('Refusing to trigger legacy OpenServ workflow, including the already-decided Task 750591. Set SERVJURY_AGENT_PROFILE=e2e-v2 for a separately provisioned workflow.');
 }
 if (process.env.SERVJURY_CONFIRM_TASK !== 'RUN_ONE_TEST_TASK') {
   throw new Error('Explicit one-shot consent required: SERVJURY_CONFIRM_TASK=RUN_ONE_TEST_TASK');
@@ -37,7 +37,7 @@ const provisioned=getProvisionedInfo(profile.agentName,profile.workflowName);
 const workflowId=Number(provisioned?.workflowId);
 const agentId=Number(provisioned?.agentId);
 if (!Number.isSafeInteger(workflowId)||workflowId<=0||
-    !Number.isSafeInteger(agentId)||agentId<=0||workflowId===14061||agentId===4953) {
+    !Number.isSafeInteger(agentId)||agentId<=0||[14061,14062].includes(workflowId)||[4953,4954].includes(agentId)) {
   throw new Error('Isolated E2E OpenServ agent/workflow are missing or equal the historical workflow. Provision the e2e profile first; do not reuse Task 750591.');
 }
 if(process.env.OPENSERV_WORKFLOW_ID &&
