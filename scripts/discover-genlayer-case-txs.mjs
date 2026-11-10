@@ -36,15 +36,24 @@ for(const summary of selected){
   // Studio calldata may be SDK v1's plain text representation instead of
   // an object with function_name. Method hints are never used as proof on
   // their own; the exact case ID must also match.
+  const readable=typeof calldata==='object' && calldata && typeof calldata.readable==='string'
+    ? calldata.readable : source;
   const method=typeof calldata==='object' && calldata
     ? String(calldata.function_name||calldata.functionName||calldata.method||'')
     : source.includes('adjudicate_case') ? 'adjudicate_case'
     : source.includes('file_case') ? 'file_case' : '';
+  const executionValues=Array.isArray(tx?.consensus_data?.leader_receipt)
+    ? tx.consensus_data.leader_receipt.map(x=>String(x?.execution_result||'UNKNOWN').toUpperCase()).slice(0,8)
+    : [];
   if(!caseMatch && method!=='adjudicate_case')continue;
   matches++;
   console.log('GENLAYER_CASE_TRANSACTION',JSON.stringify({
     hash,caseMatched:caseMatch,
     methodHint:caseMatch && /^[A-Za-z_]{1,60}$/.test(method)?method:null,
+    methodMarkers:{fileCase:readable.includes('file_case'),adjudicateCase:readable.includes('adjudicate_case')},
+    executionReceiptCount:executionValues.length,
+    executionReceipts:executionValues.map(x=>['SUCCESS','ERROR','UNKNOWN'].includes(x)?x:'OTHER'),
+    resultName:/^[A-Za-z_]{1,64}$/.test(String(tx?.result_name||''))?tx.result_name:null,
     status:String(tx?.statusName||'UNKNOWN'),
     execution:provenGenVMExecutionName(tx)||'UNCONFIRMED',
   }));
