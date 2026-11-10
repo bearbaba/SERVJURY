@@ -38,11 +38,21 @@ async function write(client, addr, TransactionStatus, functionName, args) {
   // pass the newer v2 fee estimate/simulation fields intended for Studio-dev.
   const txHash = await client.writeContract(call);
   try {
+    // SDK 1.1.8 defaults fullTransaction=false. Its simplified receipt
+    // strips consensus_data.leader_receipt, which is the only available
+    // GenVM execution result on hosted Studionet (61999).
     const receipt = await client.waitForTransactionReceipt({
-      hash: txHash, status: TransactionStatus.FINALIZED,
+      hash: txHash, status: TransactionStatus.FINALIZED, fullTransaction: true,
     });
-    if (!isFinalizedSuccess(receipt)) {
-      const error = new Error(`Write not confirmed successful: ${receipt?.statusName || 'UNKNOWN'} / ${receipt?.txExecutionResultName || 'UNKNOWN'}`);
+    let verified = isFinalizedSuccess(receipt);
+    if (!verified) {
+      // Read-only fallback; NEVER submit a second transaction to obtain
+      // missing execution data from an incomplete SDK receipt.
+      const stored = await client.getTransaction({ hash: txHash });
+      verified = isFinalizedSuccess(stored);
+    }
+    if (!verified) {
+      const error = new Error('Write finalized execution not confirmed successful by complete GenVM receipt');
       error.txHash = txHash;
       throw error;
     }
