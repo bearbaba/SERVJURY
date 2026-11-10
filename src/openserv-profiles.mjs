@@ -1,25 +1,33 @@
-// Separate new E2E acceptance resources from historical OpenServ task 750591.
-// Never call provision() for the legacy cached workflow just to change its input.
-export const LEGACY_OPEN_SERV = Object.freeze({
-  id:'legacy',
-  agentName:'SERVJURY — Internet Court Review',
-  workflowName:'SERVJURY Delivery Review',
+// Strictly isolated OpenServ identities: legacy and E2E V1 are historical.
+// Never sync, restart, or trigger either one to repair a signed case.
+export const LEGACY_OPEN_SERV=Object.freeze({
+  id:'legacy',agentName:'SERVJURY — Internet Court Review',
+  workflowName:'SERVJURY Delivery Review',launchable:true,
 });
-export const E2E_OPEN_SERV = Object.freeze({
-  id:'e2e',
-  agentName:'SERVJURY — E2E Acceptance V1',
-  workflowName:'SERVJURY E2E Acceptance V1',
+export const E2E_OPEN_SERV=Object.freeze({
+  id:'e2e',agentName:'SERVJURY — E2E Acceptance V1',
+  workflowName:'SERVJURY E2E Acceptance V1',launchable:false,
+});
+export const E2E_V2_OPEN_SERV=Object.freeze({
+  id:'e2e-v2',agentName:'SERVJURY — E2E Acceptance V2',
+  workflowName:'SERVJURY E2E Acceptance V2',launchable:true,
 });
 export function selectOpenServProfile(env=process.env) {
-  const kind=env.SERVJURY_AGENT_PROFILE || 'legacy';
-  if (!['legacy','e2e'].includes(kind)) {
-    throw Error('Unknown SERVJURY_AGENT_PROFILE; only legacy or e2e are allowed.');
+  const kind=env.SERVJURY_AGENT_PROFILE||'legacy';
+  const profile=kind==='legacy'?LEGACY_OPEN_SERV
+    :kind==='e2e'?E2E_OPEN_SERV
+    :kind==='e2e-v2'?E2E_V2_OPEN_SERV:null;
+  if(!profile)throw Error('Unknown SERVJURY_AGENT_PROFILE; allowed: legacy, e2e (frozen), e2e-v2.');
+  if(profile.id==='legacy'&&env.SERVJURY_COMPLETE_VERIFIED_TASK==='1') {
+    throw Error('Verified task completion is forbidden on the original legacy OpenServ workflow.');
   }
-  if (kind==='legacy' && env.SERVJURY_COMPLETE_VERIFIED_TASK==='1') {
-    throw Error('Verified task completion is forbidden on the existing legacy OpenServ workflow.');
-  }
-  return kind==='e2e' ? E2E_OPEN_SERV : LEGACY_OPEN_SERV;
+  return profile;
 }
-export function allowsVerifiedTaskCompletion(profile, env=process.env) {
-  return profile.id==='e2e' && env.SERVJURY_COMPLETE_VERIFIED_TASK==='1';
+export function requireActiveProfile(profile){
+  if(!profile?.launchable)throw Error('SERVJURY E2E V1 is frozen: do not restart, provision, or trigger its existing workflow 14062 / task 750592. Use e2e-v2.');
+  return profile;
+}
+export function allowsVerifiedTaskCompletion(profile,env=process.env){
+  // Only the fresh isolated V2 workflow may complete a fully verified task.
+  return profile?.id==='e2e-v2'&&env.SERVJURY_COMPLETE_VERIFIED_TASK==='1';
 }
