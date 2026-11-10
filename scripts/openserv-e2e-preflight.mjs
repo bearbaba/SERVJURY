@@ -1,21 +1,21 @@
 // Authenticated READ-ONLY configuration validation before explicitly
 // initiating a fresh isolated E2E task. No signatures or task changes.
 import {getProvisionedInfo,PlatformClient} from '@openserv-labs/client';
-import {selectOpenServProfile} from '../src/openserv-profiles.mjs';
+import {selectOpenServProfile,requireActiveProfile} from '../src/openserv-profiles.mjs';
 import {requireOpenServUserApiKey} from '../src/openserv-auth.mjs';
-const profile=selectOpenServProfile();
-if(profile.id!=='e2e')throw Error('Preflight requires SERVJURY_AGENT_PROFILE=e2e; existing workflow 14061 must remain frozen.');
+const profile=requireActiveProfile(selectOpenServProfile());
+if(profile.id!=='e2e-v2')throw Error('Preflight requires SERVJURY_AGENT_PROFILE=e2e-v2; previous workflows 14061/14062 must remain frozen.');
 if(process.env.SERVJURY_COMPLETE_VERIFIED_TASK!=='1')throw Error('E2E completion mode is not explicitly enabled in preflight; do not trigger an incomplete demo.');
 const cached=getProvisionedInfo(profile.agentName,profile.workflowName);
 const workflowId=Number(cached?.workflowId),agentId=Number(cached?.agentId);
 if(!Number.isSafeInteger(workflowId)||workflowId<=0||
    !Number.isSafeInteger(agentId)||agentId<=0||
-   workflowId===14061||agentId===4953)throw Error('Isolated E2E workflow and agent not provisioned or conflict with legacy environment.');
+   [14061,14062].includes(workflowId)||[4953,4954].includes(agentId))throw Error('Isolated E2E workflow and agent not provisioned or conflict with legacy environment.');
 const client=new PlatformClient({apiKey:requireOpenServUserApiKey(process.env.OPENSERV_USER_API_KEY)});
 const tasks=await client.tasks.list({workflowId});
 if(!Array.isArray(tasks)||tasks.length!==1)throw Error('Expected exactly one isolated E2E task node; no webhook will be triggered.');
 const task=tasks[0];
-if(Number(task.id)===750591||Number(task.assigneeAgentId)!==agentId) {
+if([750591,750592].includes(Number(task.id))||Number(task.assigneeAgentId)!==agentId) {
   throw Error('E2E task identity mismatch; no webhook will be triggered.');
 }
 const detail=await client.get('/workspaces/'+workflowId+'/tasks/'+task.id+'/detail');
