@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {summarizeStoredGenLayerTx} from '../src/genlayer-tx-status.mjs';
+import {summarizeStoredGenLayerTx,provenGenVMExecutionName} from '../src/genlayer-tx-status.mjs';
+import {isFinalizedSuccess} from '../src/genlayer.mjs';
 const addr='0x7040Db57D130C9c121Ad7152143b5076abB3c2B5';
 const tx=(statusName,txExecutionResultName)=>({statusName,txExecutionResultName,recipient:addr});
 test('GenLayer finalized success still requires get_case readback',()=>{
@@ -28,4 +29,30 @@ test('SDK numeric GenVM execution result is authoritative when symbolic field ab
 });
 test('consensus majority result is not a GenVM execution result',()=>{
   assert.equal(summarizeStoredGenLayerTx({...tx('FINALIZED',undefined),result:1},addr).result,'FINALIZED_NOT_PROVEN_SUCCESS');
+});
+
+test('actual Studionet v1-style transaction with unanimous SUCCESS leader receipts is valid',()=>{
+  const receipt={...tx('FINALIZED',undefined),consensus_data:{leader_receipt:[
+    {vote:{},execution_result:'SUCCESS'},{vote:'agree',execution_result:'SUCCESS'}
+  ]}};
+  assert.equal(provenGenVMExecutionName(receipt),'FINISHED_WITH_RETURN');
+  assert.equal(isFinalizedSuccess(receipt),true);
+  assert.equal(summarizeStoredGenLayerTx(receipt,addr).result,'FINALIZED_SUCCESS_CHECK_CASE_STATE');
+});
+test('legacy receipt with conflicting, absent, or error GenVM results is never a success',()=>{
+  const variants=[
+    [{execution_result:'SUCCESS'},{execution_result:'ERROR'}],
+    [{execution_result:'ERROR'},{execution_result:'ERROR'}],
+    [{execution_result:'SUCCESS'},{result:'unknown'}],
+    [],
+  ];
+  for(const leader_receipt of variants){
+    const receipt={...tx('FINALIZED',undefined),consensus_data:{leader_receipt}};
+    assert.equal(isFinalizedSuccess(receipt),false);
+  }
+});
+test('leader SUCCESS cannot override missing finality or explicit execution error',()=>{
+  const leaders={leader_receipt:[{execution_result:'SUCCESS'},{execution_result:'SUCCESS'}]};
+  assert.equal(isFinalizedSuccess({...tx('ACCEPTED',undefined),consensus_data:leaders}),false);
+  assert.equal(isFinalizedSuccess({...tx('FINALIZED','FINISHED_WITH_ERROR'),consensus_data:leaders}),false);
 });
