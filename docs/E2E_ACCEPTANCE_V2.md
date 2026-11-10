@@ -1,5 +1,7 @@
 # SERVJURY — E2E V2 after confirmed file_case confirmation failure
 
+**ARCHIVED — DO NOT RE-RUN.** E2E V2 was executed on workflow **14063**, task **750593**, and the task later required Human Assistance while its GenLayer case remained FILED. The steps below document the *original* experiment, not an invitation to repeat it. Both E2E V1 and V2 profiles are frozen from new agent starts and webhook triggers. See [Task 750593 investigation](E2E_TASK_750593_DIAGNOSIS.md).
+
 ## Verified cause of Task 750592 stopping
 
 The original E2E V1 Agent terminal showed:
