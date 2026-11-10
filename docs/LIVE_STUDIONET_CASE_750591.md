@@ -15,9 +15,10 @@
 
 ## Still missing
 
-- The exact independently confirmed `adjudicate_case` transaction hash for this new DECIDED case. DECIDED proves a persisted GenLayer verdict, **not** that this document has both signed transaction hashes.
-- The authenticated OpenServ task log writeback containing the finalized verdict, receipt ID and both transaction hashes. The operator's local Agent previously reported `review not finalized; no verified verdict written to task log` after a false-negative receipt check.
-- Whether OpenServ's corresponding **run session** was eventually completed. Workflow task node status is distinct from run/session status; a cancelled previous session or task node cannot be silently treated as completed.
+- The public contract-history query now locates the `adjudicate_case` transaction **`0xfaf3cb1fc7bc95e81c9e6950ceeee8ee640aaeb3010ab6a4c2ec6a2612c50406`** for the same case ID. The decoded calldata contains the `adjudicate_case` method marker and case ID; consensus is **FINALIZED / MAJORITY_AGREE**. However, its two `leader_receipt[].execution_result` entries are **SUCCESS and ERROR**, so the strict `isFinalizedSuccess` guard correctly reports **UNCONFIRMED**, rather than falsely asserting unanimous GenVM success. The persisted `get_case` view independently proves **DECIDED / REWORK**.
+- The adjudication transaction's **unambiguous successful GenVM execution status remains unverified** because these receipt entries conflict. The on-chain verdict is persisted, but the transaction must not be mislabeled `FINALIZED / SUCCESS`.
+- The authenticated OpenServ task log writeback containing the on-chain verdict, receipt ID and referenced transaction hashes. The operator's local Agent previously reported `review not finalized; no verified verdict written to task log` after a false-negative receipt check.
+- Whether OpenServ's corresponding **run session** was eventually completed. On the latest operator read-only inspection on 2026-11-10, workflow node **750591** was **human-assistance-required** with no output or attachments; previous observations had shown `cancelled`. Workflow task-node status is distinct from run/session status, and neither state is evidence of a successful task log writeback.
 
 ## Root cause and tested fix
 
@@ -38,4 +39,29 @@ Both commands use a dummy public account and do not require the GenLayer private
 
 `genlayer-js@1.1.8` `waitForTransactionReceipt()` defaults to **`fullTransaction: false`**, which calls `simplifyTransactionReceipt` and strips `consensus_data.leader_receipt`. Merely updating `isFinalizedSuccess` to inspect leader receipts is insufficient if it receives the simplified receipt. The adapter now explicitly passes **`fullTransaction: true`**, verifies both `FINALIZED` and the actual GenVM execution, and uses `getTransaction` only as a read-only fallback if the receipt is incomplete. Regression tests assert the exact wait arguments and refuse conflicting or errored GenVM results.
 
-**This is a fix for future transaction confirmation, not evidence the cancelled OpenServ workflow was recovered.** Do not replay the completed case to test the patch. The actual `adjudicate_case` TX hash and confirmed OpenServ task-log writeback remain separate acceptance requirements.
+**This is a fix for future transaction confirmation, not evidence the cancelled OpenServ workflow was recovered.** Do not replay the completed case to test the patch. The `adjudicate_case` hash has now been located, but its **conflicting GenVM execution receipts** and the missing authenticated OpenServ task-log writeback remain separate acceptance gaps.
+
+
+## Read-only verification record — 2026-11-10 14:31 UTC
+
+The following is grounded in actual Studionet RPC queried by GitHub Actions (not fixture data):
+
+| Property | file_case | adjudicate_case |
+| --- | --- | --- |
+| Tx hash | `0x318fba389317e3b1986568273ca3c9cc3008aa4ea18ffa61ab11a134b5553376` | `0xfaf3cb1fc7bc95e81c9e6950ceeee8ee640aaeb3010ab6a4c2ec6a2612c50406` |
+| Case ID in calldata | Match | Match |
+| Method marker | file_case | adjudicate_case |
+| Consensus status | FINALIZED | FINALIZED |
+| Consensus result | MAJORITY_AGREE | MAJORITY_AGREE |
+| Legacy leader GenVM results | SUCCESS / SUCCESS | SUCCESS / ERROR |
+| Strict successful-execution proof | Yes | **No — conflicting receipts** |
+
+`get_case` readback **DECIDED/REWORK** is real evidence of persisted state. No user task has been retriggered, no new GenLayer transaction signed, and no OpenServ log was written by these audits. The current workflow node should be inspected in OpenServ **Run Mode** for its latest Human Assistance request, but do not answer with an invented manual verdict or force a cancelled session to `done`.
+
+Read-only commands:
+```bash
+npm run task:chain
+npm run tx:history
+SERVJURY_INSPECT_TX_HASH=0xfaf3cb1fc7bc95e81c9e6950ceeee8ee640aaeb3010ab6a4c2ec6a2612c50406 npm run tx:inspect
+npm run task:detail
+```
