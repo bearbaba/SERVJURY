@@ -7,6 +7,10 @@ on:
         description: 'Type RUN_ONE_TEST_TASK to trigger a single external OpenServ task'
         required: true
         type: string
+      workflow_id:
+        description: 'Numeric OpenServ workflow ID, after rotating exposed trigger credentials'
+        required: true
+        type: string
 
 permissions:
   contents: read
@@ -18,18 +22,19 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     env:
-      OPENSERV_WEBHOOK_URL: ${{ secrets.OPENSERV_WEBHOOK_URL }}
+      OPENSERV_USER_API_KEY: ${{ secrets.OPENSERV_USER_API_KEY }}
+      OPENSERV_WORKFLOW_ID: ${{ inputs.workflow_id }}
       SERVJURY_CONFIRM_TASK: RUN_ONE_TEST_TASK
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-      - name: Require an existing OpenServ webhook secret
+      - name: Require an existing OpenServ platform user API key
         shell: bash
         run: |
-          if [ -z "$OPENSERV_WEBHOOK_URL" ]; then
-            echo "::error::Set OPENSERV_WEBHOOK_URL in repository Actions secrets first. Do not paste it into workflow inputs."
+          if [ -z "$OPENSERV_USER_API_KEY" ]; then
+            echo "::error::Set OPENSERV_USER_API_KEY in repository Actions secrets first. Do not paste it into workflow inputs."
             exit 1
           fi
       - name: Install official OpenServ client
