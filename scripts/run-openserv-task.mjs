@@ -2,6 +2,7 @@
 // Does not create a synthetic workspace ID; OpenServ supplies task context.
 // The webhook URL contains a bearer-like token. Never print, commit or paste it.
 import { PlatformClient } from '@openserv-labs/client';
+import { existsSync, readFileSync } from 'node:fs';
 
 const isExecute = process.argv.includes('--execute');
 const scenario = Object.freeze({
@@ -15,14 +16,14 @@ console.log('Scenario: contest the incorrect INV-B subtotal without providing th
 console.log('No wallet key, webhook token, synthetic task ID or payment is printed.');
 if (!isExecute) {
   console.log('DRY RUN ONLY. No OpenServ request or GenLayer transaction sent.');
-  console.log('To create exactly one task, review your test wallet/network, set OPENSERV_WEBHOOK_URL privately and run npm run task:openserv -- --execute');
+  console.log('To create exactly one task, review the test wallet/network and use the private webhook from npm run agent, then run npm run task:openserv -- --execute with SERVJURY_CONFIRM_TASK=RUN_ONE_TEST_TASK');
   process.exit(0);
 }
 if (process.env.SERVJURY_CONFIRM_TASK !== 'RUN_ONE_TEST_TASK') {
   throw new Error('Explicit one-shot consent required: SERVJURY_CONFIRM_TASK=RUN_ONE_TEST_TASK');
 }
-const raw = process.env.OPENSERV_WEBHOOK_URL;
-if (!raw) throw new Error('Missing OPENSERV_WEBHOOK_URL (store only in untracked .env)');
+const raw = process.env.OPENSERV_WEBHOOK_URL || (existsSync('.openserv-trigger-url') ? readFileSync('.openserv-trigger-url', 'utf8').trim() : '');
+if (!raw) throw new Error('No OpenServ webhook configured. Start npm run agent first, or set OPENSERV_WEBHOOK_URL privately.');
 const url = new URL(raw);
 if (url.protocol !== 'https:' || url.hostname !== 'api.openserv.ai' || !/^\/webhooks\/trigger\/[A-Za-z0-9_-]+\/?$/.test(url.pathname)) {
   throw new Error('Only the canonical OpenServ https webhook URL is accepted');
