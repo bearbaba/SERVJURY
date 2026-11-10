@@ -15,6 +15,9 @@ export function validateRecoveryTask(task,{workflowId,taskId,agentId}) {
   if(String(task?.status||'').toLowerCase()!=='human-assistance-required') {
     throw Error('Original task is not awaiting Human Assistance; no recovery log will be attempted.');
   }
+  if(typeof task?.output==='string' && task.output.trim()) {
+    throw Error('Original task already has output; inspect logs before a recovery attempt.');
+  }
   if(typeof task?.description!=='string' ||
      task.description!=='Use adjudicate_delivery to return a finalized GenLayer verdict to the original task log.') {
     throw Error('OpenServ task description does not match the original reviewed workflow.');
