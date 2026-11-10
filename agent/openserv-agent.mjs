@@ -10,7 +10,7 @@ import { fileLiveCase, judgeLiveCase, readLiveCase } from '../src/genlayer.mjs';
 import { originalWebhookEvidence } from '../src/openserv-trusted-input.mjs';
 import { stableTaskIdentity, verifyLivePlatformTask } from '../src/openserv-stable-identity.mjs';
 import { runTaskReview } from '../src/openserv-bridge.mjs';
-import { SERVJURY_TASK_DESCRIPTION, SERVJURY_TASK_BODY, SERVJURY_TASK_INPUT } from '../src/openserv-task-instructions.mjs';
+import { SERVJURY_TASK_DESCRIPTION, SERVJURY_TASK_BODY, SERVJURY_TASK_INPUT, SERVJURY_TASK_BODY_V2, SERVJURY_TASK_INPUT_V2 } from '../src/openserv-task-instructions.mjs';
 import { selectOpenServProfile, requireActiveProfile, allowsVerifiedTaskCompletion } from '../src/openserv-profiles.mjs';
 import { buildVerifiedTaskOutput, confirmCompletedTask } from '../src/openserv-verified-completion.mjs';
 
@@ -28,7 +28,7 @@ let activeWorkflowId = 0;
 let activeAgentId = 0;
 
 const agent = new Agent({
-  systemPrompt: 'You are SERVJURY, a neutral delivery-review relay. Never invent or revise an on-chain verdict. Only report finalized chain state.',
+  systemPrompt: 'You are SERVJURY, a neutral delivery-review relay. Never invent or revise an on-chain verdict. Only report finalized chain state. If adjudicate_delivery returns NOT_VERIFIED or TASK_COMPLETION_UNCONFIRMED, do not assert successful completion or call output-completion tools. Never retry a signed operation. A reviewer score is not proof of a GenLayer verdict.',
 });
 agent.addCapability({
   name: 'adjudicate_delivery',
@@ -207,8 +207,8 @@ try {
     tasks: [{
       name:'delivery-evidence-review',
       description:SERVJURY_TASK_DESCRIPTION,
-      body:SERVJURY_TASK_BODY,
-      input:SERVJURY_TASK_INPUT,
+      body:profile.id==='e2e-v2'?SERVJURY_TASK_BODY_V2:SERVJURY_TASK_BODY,
+      input:profile.id==='e2e-v2'?SERVJURY_TASK_INPUT_V2:SERVJURY_TASK_INPUT,
     }],
   },
   });
