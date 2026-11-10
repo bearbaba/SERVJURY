@@ -38,11 +38,19 @@ ALLOW_FIRST_FILING=1
 
 **Do not send any secret to ChatGPT.** The test private key is necessary because the autonomous OpenServ capability signs `file_case` and `adjudicate_case`. You may choose to create a fresh, expendable wallet and fund it using the network's supported test-token mechanism. Do not export your main wallet's key.
 
-If you already use an OpenServ platform account and want the agent under that identity, configure its OpenServ account credentials privately according to the official OpenServ client documentation. Without an existing identity, `provision()` may create a **new** account and wallet; preserve `.openserv.json` so future runs reuse the intended identity.
+**OpenServ account API key now required:** OpenServ's wallet-nonce sign-in returned HTTP 404 on 10 November 2026. Use a distinct **platform user API key** named `OPENSERV_USER_API_KEY`, configured as a GitHub Codespaces Secret. Authorize `bearbaba/SERVJURY`, then restart the Codespace. This is not `GENLAYER_PRIVATE_KEY` or the per-agent `OPENSERV_API_KEY`. The patched `provision({ userApiKey })` path skips wallet-nonce authentication. See the [404 recovery runbook](OPENSERV_AUTH_404.md).
 
 ## 3. Launch an authenticated OpenServ agent
 
-In Codespaces terminal A:
+Once your user API key secret is loaded, update source safely from the repo, then start the agent:
+
+```bash
+git pull --ff-only
+npm install
+node -e 'console.log(process.env.OPENSERV_USER_API_KEY ? "OPENSERV USER KEY: SET" : "OPENSERV USER KEY: NOT SET")'
+```
+
+If `NOT SET`, do not start the agent; add the Codespaces secret and restart. In Codespaces terminal A:
 
 ```bash
 npm run agent
