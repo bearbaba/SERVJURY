@@ -1,6 +1,6 @@
 # SERVJURY — OpenServ partner integration acceptance (10 November 2026)
 
-**Purpose:** close the demonstrable partner loop: **real OpenServ task → GenLayer filing and AI judgment → finalized on-chain readback → OpenServ task log**.
+**Status update (10 Nov 2026):** Authenticated original OpenServ Task 750591 produced genuine Studionet DECIDED/REWORK readback and a visible task-log receipt, but DID NOT complete due to AI_InvalidPromptError. Its adjudication transaction also has conflicting GenVM receipts. Do not replay it. The next permitted experiment is the [isolated E2E V1 acceptance run](E2E_ACCEPTANCE_V1.md), which provisions a different agent and workflow and requires both strictly successful new transactions, a matching task-log receipt, an actual task DONE output, and a successful Run Mode session. This update supersedes older statements below saying partner task-log writeback has never been exercised.\n\n**Purpose:** close the demonstrable partner loop: **real OpenServ task → GenLayer filing and AI judgment → finalized on-chain readback → OpenServ task log**.
 
 This guide is for an authorized operator of the OpenServ account and a **dedicated GenLayer Studionet test wallet**. The three [Studio on-chain fixtures](ONCHAIN_EVIDENCE.md) are already recorded, but none of them is a genuine OpenServ task.
 
