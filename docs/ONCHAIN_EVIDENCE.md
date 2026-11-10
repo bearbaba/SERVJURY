@@ -29,14 +29,14 @@ This ledger records GenLayer Studio transaction details supplied by the operator
 ## Remaining acceptance sequence
 
 1. **Completed:** `get_case("SJ-INV-20261110-A")` returned `DECIDED`, `ACCEPT`, and the persisted explanation.
-2. Use [Studio run card](STUDIO_RUN_NOW.md) to file and adjudicate Case B (intended `REWORK`) and Case C (intended `UNVERIFIABLE`); record **actual** results.
+2. **Completed:** cases B and C finalized and returned persisted `REWORK` / `UNVERIFIABLE` verdicts in the operator's Studio readback.
 3. Perform negative tests for duplicate filing and duplicate adjudication (the calls should fail).
 4. Demonstrate authenticated OpenServ task creation/writeback separately; Studio-only fixture transactions do not prove OpenServ integration.
 5. Capture chain ID, transaction links, exact source revision, official three logos and edited video under 45 seconds.
 
 Avoid converting expected outcomes into observed results.
 
-## Case B — Filed, awaiting AI adjudication
+## Case B — Filed and AI-adjudicated on chain
 
 | Field | Operator-supplied observation |
 | --- | --- |
@@ -57,3 +57,33 @@ Avoid converting expected outcomes into observed results.
 | Reason | INV-B USD 90 instead of required USD 60; total USD 130 instead of USD 100 |
 
 The operator-supplied adjudication transaction and subsequent readback confirm a persisted `REWORK` verdict for this synthetic fixture. This does **not** prove authenticated OpenServ integration or count how many individual validators agreed. Note that the Case B evidence explicitly included the correct answer, so additional blind-evidence/adversarial testing would strengthen evaluation.
+
+## Case C — AI-adjudicated, UNVERIFIABLE
+
+| Field | Operator-supplied observation |
+| --- | --- |
+| Case ID | `SJ-INV-20261110-C` |
+| Contract | [`0x7040Db57D130C9c121Ad7152143b5076abB3c2B5`](https://explorer-studio.genlayer.com/address/0x7040Db57D130C9c121Ad7152143b5076abB3c2B5) |
+| Claimant | `0x4C7cb73aC8F8999af21cfc9fF4cF2333a9508Dcb` |
+| Synthetic task ID | `openserv-demo-interview-C` (fixture; not authenticated OpenServ) |
+| Filing transaction | Not yet provided; successful filing is implied by later adjudication and readback, but its hash must be recorded separately |
+| Adjudication method | `adjudicate_case` |
+| Adjudication transaction | [`0x6803ac8d541ba05f984c78d457804c80376ecd9b0bc3b253d80e2973a63c3a1c`](https://explorer-studio.genlayer.com/tx/0x6803ac8d541ba05f984c78d457804c80376ecd9b0bc3b253d80e2973a63c3a1c) |
+| Adjudication time | Nov 10, 2026 2:57:34 PM (explorer display time) |
+| Finality / execution | FINALIZED / GenVM SUCCESS |
+| Transaction consensus | Accepted; five initial validators |
+| Equivalence Principle verdict | `UNVERIFIABLE` |
+| Persisted `get_case` readback | `DECIDED`, `UNVERIFIABLE`, matching nonempty reason (operator-supplied) |
+| Reason | No audio recording, transcript, timestamps or primary source provided to independently verify the claimed complaints |
+
+The output and readback agree that evidence is insufficient. This is not evidence of authenticated OpenServ workflow synchronization or an independent audio transcription.
+
+## Three-way judgment acceptance — Studio
+
+| Case | Expected | Observed, persisted | Evidence |
+| --- | --- | --- | --- |
+| A — valid invoice | ACCEPT | **ACCEPT** | Finalized adjudication + `get_case` readback |
+| B — incorrect arithmetic | REWORK | **REWORK** | Finalized adjudication + `get_case` readback |
+| C — absent audio proof | UNVERIFIABLE | **UNVERIFIABLE** | Finalized adjudication + `get_case` readback |
+
+**Next quality gate:** Real OpenServ task identity and authenticated `addLogToTask` writeback, then edited sub-45-second three-logo video. These synthetic cases show the GenLayer core adjudicator, **not** completed partner interoperability. Capture Case C filing hash and chain ID when available.
