@@ -48,6 +48,10 @@ jobs:
         run: npm install --no-fund --no-audit --ignore-scripts
       - name: Show installed SDK versions
         run: npm ls @openserv-labs/sdk @openserv-labs/client genlayer-js zod --depth=0
+      - name: Read existing finalized SERVJURY case from Studionet (read-only)
+        continue-on-error: true
+        timeout-minutes: 2
+        run: node scripts/studionet-preflight.mjs
       - name: Verify actual package exports without credentials
         run: |
           node --input-type=module -e "import { Agent, run } from '@openserv-labs/sdk'; import { provision, triggers } from '@openserv-labs/client'; if (![Agent,run,provision,triggers.webhook].every(x => typeof x === 'function')) process.exit(1)"
