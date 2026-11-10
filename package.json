@@ -15,10 +15,13 @@
     "@openserv-labs/client": "2.5.3",
     "@openserv-labs/sdk": "2.4.1",
     "genlayer-js": "1.1.8",
-    "zod": "3.25.76",
+    "zod": "4.6.7",
     "tsx": "4.23.15"
   },
   "engines": {
     "node": ">=22"
+  },
+  "overrides": {
+    "zod": "4.6.7"
   }
 }
