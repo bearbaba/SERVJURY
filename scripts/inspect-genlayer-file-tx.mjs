@@ -14,25 +14,32 @@ const client=createClient({chain:studionet,account:createAccount('0x'+'11'.repea
 console.log('SERVJURY_PUBLIC_TX_INSPECT', JSON.stringify({chainId:61999,hash,contract:addr}));
 try {
   const tx=await client.getTransaction({hash});
-  // In SDK 1.1.8 getTransaction exposes consensus status but omits the
-  // explicit GenVM outcome. Fetch the node's documented raw receipt and
-  // compare status/recipient before merging the execution fields.
+  // Stable Studio RPC is older than the latest API reference. Try its
+  // documented read-only receipt and transaction-data endpoints in order.
+  // Never print error bodies, raw call arguments or any private credentials.
   let direct=null;
-  try {
-    const rawResponse=await fetch('https://studio.genlayer.com/api',{
-      method:'POST',
-      headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({
-        jsonrpc:'2.0',id:1,method:'gen_getTransactionReceipt',params:[{txId:hash}],
-      }),
-      signal:AbortSignal.timeout(12000),
-    });
-    if(!rawResponse.ok)throw Error('RPC transport failure');
-    const data=await rawResponse.json();
-    if(data?.error||!data?.result)throw Error('RPC receipt not available');
-    direct=data.result;
-  } catch {
-    console.log('RAW_GENLAYER_RECEIPT_NOT_AVAILABLE; SDK stored transaction remains authoritative for status only.');
+  let source='';
+  for(const method of ['gen_getTransactionReceipt','gen_getTransactionData']){
+    try {
+      const rawResponse=await fetch('https://studio.genlayer.com/api',{
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({jsonrpc:'2.0',id:1,method,params:[{txId:hash}]}),
+        signal:AbortSignal.timeout(12000),
+      });
+      if(!rawResponse.ok)throw Error('RPC transport failure');
+      const data=await rawResponse.json();
+      if(data?.error || !data?.result) {
+        const code=Number(data?.error?.code);
+        console.log('GENLAYER_RPC_METHOD_UNAVAILABLE',JSON.stringify({method,code:Number.isFinite(code)?code:null}));
+        continue;
+      }
+      direct=data.result;
+      source=method;
+      break;
+    } catch {
+      console.log('GENLAYER_RPC_METHOD_UNAVAILABLE',JSON.stringify({method,code:null}));
+    }
   }
   const consistent=direct &&
     String(direct.statusName||'').toUpperCase()===String(tx.statusName||'').toUpperCase() &&
@@ -41,7 +48,7 @@ try {
     throw new Error('Node raw receipt does not agree with SDK stored transaction; refusing result.');
   }
   const result=summarizeStoredGenLayerTx(direct ? {...tx,txExecutionResultName:direct.txExecutionResultName,txExecutionResult:direct.txExecutionResult} : tx,addr);
-  console.log('GENLAYER_EXECUTION_SOURCE', direct ? 'RAW_GEN_GET_TRANSACTION_RECEIPT' : 'SDK_STORED_TRANSACTION');
+  console.log('GENLAYER_EXECUTION_SOURCE', direct ? source : 'SDK_STORED_TRANSACTION');
   console.log('GENLAYER_STORED_TX_RESULT',JSON.stringify(result));
   if(result.result!=='FINALIZED_SUCCESS_CHECK_CASE_STATE') {
     console.log('NO_AUTHORIZATION_TO_RETRY: inspect GenLayer transaction and original case before any additional signing.');
