@@ -3,6 +3,7 @@
 // The webhook URL contains a bearer-like token. Never print, commit or paste it.
 import { existsSync, readFileSync } from 'node:fs';
 import { requireOpenServUserApiKey } from '../src/openserv-auth.mjs';
+import { summarizeTriggerResult } from '../src/openserv-trigger-result.mjs';
 
 const isExecute = process.argv.includes('--execute');
 const scenario = Object.freeze({
@@ -38,9 +39,17 @@ const { PlatformClient } = await import('@openserv-labs/client');
 const client = new PlatformClient({ apiKey: userApiKey });
 try {
   const response = await client.triggers.fireWebhook({ workflowId, input: scenario });
-  console.log('OpenServ trigger request returned. Inspect the OpenServ task page and verify GenLayer finalized writes.');
-  // Avoid accidentally logging tokens or private platform metadata in raw SDK responses.
-  console.log('Response keys:', response && typeof response === 'object' ? Object.keys(response).filter(k => !/token|key|secret|auth|url/i.test(k)).join(', ') : '(none)');
+  const summary = summarizeTriggerResult(response);
+  console.log('OpenServ trigger result (sanitized):', JSON.stringify(summary));
+  if (summary.result === 'ERROR') {
+    console.error('OpenServ reported an application-level error. The webhook MAY have created a session. DO NOT retry until the original execution is inspected.');
+    process.exitCode = 1;
+  } else if (summary.result !== 'ACKNOWLEDGED_NOT_VERIFIED') {
+    console.warn('Webhook completion not confirmed. DO NOT retry blindly; inspect workflow sessions and task activities.');
+    process.exitCode = 2;
+  } else {
+    console.log('OpenServ acknowledged webhook response. This is NOT evidence of a finalized GenLayer judgment or OpenServ task log.');
+  }
 } catch (error) {
   console.error('OpenServ trigger response not confirmed. DO NOT blindly retry: inspect OpenServ for an already created task.');
   const status = Number(error?.response?.status);
