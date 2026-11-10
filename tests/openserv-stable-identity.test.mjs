@@ -53,7 +53,16 @@ test('authenticated task must match canonical ID, assignee and description',()=>
 test('human-assistance-required and terminal OpenServ tasks cannot sign',()=>{
   const task={id:750590,assigneeAgentId:4953,status:'human-assistance-required'};
   const context={taskId:750590,agentId:4953};
-  assert.throws(()=>verifyLivePlatformTask(task,context),/terminal/);
-  assert.throws(()=>verifyLivePlatformTask({...task,status:'done'},context),/terminal/);
-  assert.throws(()=>verifyLivePlatformTask({...task,status:'cancelled'},context),/terminal/);
+  assert.throws(()=>verifyLivePlatformTask(task,context),/runnable status/);
+  assert.throws(()=>verifyLivePlatformTask({...task,status:'done'},context),/runnable status/);
+  assert.throws(()=>verifyLivePlatformTask({...task,status:'cancelled'},context),/runnable status/);
+});
+
+test('runtime error and unknown statuses cannot trigger any fresh GenLayer signature',()=>{
+  const context={taskId:750591,agentId:4953};
+  const base={id:750591,assigneeAgentId:4953,description:'VERIFIED',status:'to-do'};
+  assert.equal(verifyLivePlatformTask(base,context),true);
+  for(const status of ['Unexpected Error','unexpected-error','failed','error','cancelled','completed','blocked','paused','',null]) {
+    assert.throws(()=>verifyLivePlatformTask({...base,status},context),/runnable status/);
+  }
 });
