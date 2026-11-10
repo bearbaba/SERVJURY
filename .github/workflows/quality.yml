@@ -32,6 +32,7 @@ jobs:
           node --check scripts/run-openserv-task.mjs
           node --check src/openserv-bridge.mjs
           node --check src/genlayer.mjs
+          node --check scripts/diagnose-studionet-wait-readonly.mjs
           node --check demo/server.mjs
       - name: Run isolated deterministic tests
         run: npm run check
@@ -82,6 +83,9 @@ jobs:
           OPENSERV_WORKFLOW_ID: '14062'
           OPENSERV_TASK_ID: '750592'
         run: npm run tx:history
+      - name: Diagnose original V2 file_case SDK wait against public finalized receipt (read-only)
+        timeout-minutes: 2
+        run: node scripts/diagnose-studionet-wait-readonly.mjs
       - name: Verify actual package exports without credentials
         run: |
           node --input-type=module -e "import { Agent, run } from '@openserv-labs/sdk'; import { provision, triggers } from '@openserv-labs/client'; if (![Agent,run,provision,triggers.webhook].every(x => typeof x === 'function')) process.exit(1)"
