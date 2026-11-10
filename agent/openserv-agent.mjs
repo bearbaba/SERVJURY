@@ -11,10 +11,10 @@ import { originalWebhookEvidence } from '../src/openserv-trusted-input.mjs';
 import { stableTaskIdentity, verifyLivePlatformTask } from '../src/openserv-stable-identity.mjs';
 import { runTaskReview } from '../src/openserv-bridge.mjs';
 import { SERVJURY_TASK_DESCRIPTION, SERVJURY_TASK_BODY, SERVJURY_TASK_INPUT } from '../src/openserv-task-instructions.mjs';
-import { selectOpenServProfile, allowsVerifiedTaskCompletion } from '../src/openserv-profiles.mjs';
+import { selectOpenServProfile, requireActiveProfile, allowsVerifiedTaskCompletion } from '../src/openserv-profiles.mjs';
 import { buildVerifiedTaskOutput, confirmCompletedTask } from '../src/openserv-verified-completion.mjs';
 
-const profile=selectOpenServProfile();
+const profile=requireActiveProfile(selectOpenServProfile());
 
 if (process.env.ENABLE_LIVE_TRANSACTIONS !== '1') {
   throw new Error('Set ENABLE_LIVE_TRANSACTIONS=1 with an explicit GenLayer network and dedicated test signer.');
