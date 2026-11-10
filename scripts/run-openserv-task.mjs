@@ -2,6 +2,7 @@
 // Does not create a synthetic workspace ID; OpenServ supplies task context.
 // The webhook URL contains a bearer-like token. Never print, commit or paste it.
 import { existsSync, readFileSync } from 'node:fs';
+import { requireOpenServUserApiKey } from '../src/openserv-auth.mjs';
 
 const isExecute = process.argv.includes('--execute');
 const scenario = Object.freeze({
@@ -15,28 +16,34 @@ console.log('Scenario: contest the incorrect INV-B subtotal without providing th
 console.log('No wallet key, webhook token, synthetic task ID or payment is printed.');
 if (!isExecute) {
   console.log('DRY RUN ONLY. No OpenServ request or GenLayer transaction sent.');
-  console.log('To create exactly one task, review the test wallet/network and use the private webhook from npm run agent, then run npm run task:openserv -- --execute with SERVJURY_CONFIRM_TASK=RUN_ONE_TEST_TASK');
+  console.log('To create exactly one task, provision OpenServ with npm run agent, verify all exposed credentials have been rotated, then run --execute with SERVJURY_CONFIRM_TASK=RUN_ONE_TEST_TASK.');
   process.exit(0);
 }
 if (process.env.SERVJURY_CONFIRM_TASK !== 'RUN_ONE_TEST_TASK') {
   throw new Error('Explicit one-shot consent required: SERVJURY_CONFIRM_TASK=RUN_ONE_TEST_TASK');
 }
-const raw = process.env.OPENSERV_WEBHOOK_URL || (existsSync('.openserv-trigger-url') ? readFileSync('.openserv-trigger-url', 'utf8').trim() : '');
-if (!raw) throw new Error('No OpenServ webhook configured. Start npm run agent first, or set OPENSERV_WEBHOOK_URL privately.');
-const url = new URL(raw);
-if (url.protocol !== 'https:' || url.hostname !== 'api.openserv.ai' || !/^\/webhooks\/trigger\/[A-Za-z0-9_-]+\/?$/.test(url.pathname)) {
-  throw new Error('Only the canonical OpenServ https webhook URL is accepted');
+// The API key stays in an encrypted Codespaces Secret. Resolve the webhook
+// token privately from the registered workflow ID; neither the token nor
+// OpenServ's response body is printed or stored in a plaintext trigger file.
+const userApiKey = requireOpenServUserApiKey(process.env.OPENSERV_USER_API_KEY);
+let workflowId = Number(process.env.OPENSERV_WORKFLOW_ID || 0);
+if (!workflowId && existsSync('.openserv.json')) {
+  const state = JSON.parse(readFileSync('.openserv.json', 'utf8'));
+  workflowId = Number(state?.workflows?.['SERVJURY — Internet Court Review']?.['SERVJURY Delivery Review']?.workspaceId || 0);
 }
-if (url.username || url.password || url.search || url.hash) throw new Error('Unexpected credentials, query or fragment in webhook URL');
+if (!Number.isSafeInteger(workflowId) || workflowId <= 0) {
+  throw new Error('Missing valid OpenServ workflow ID. Provision agent once or set OPENSERV_WORKFLOW_ID explicitly.');
+}
 const { PlatformClient } = await import('@openserv-labs/client');
-const client = new PlatformClient();
+const client = new PlatformClient({ apiKey: userApiKey });
 try {
-  const response = await client.triggers.fireWebhook({ triggerUrl: url.toString(), input: scenario });
+  const response = await client.triggers.fireWebhook({ workflowId, input: scenario });
   console.log('OpenServ trigger request returned. Inspect the OpenServ task page and verify GenLayer finalized writes.');
   // Avoid accidentally logging tokens or private platform metadata in raw SDK responses.
   console.log('Response keys:', response && typeof response === 'object' ? Object.keys(response).filter(k => !/token|key|secret|auth|url/i.test(k)).join(', ') : '(none)');
 } catch (error) {
   console.error('OpenServ trigger response not confirmed. DO NOT blindly retry: inspect OpenServ for an already created task.');
-  console.error(error?.name || 'OpenServError', String(error?.message || 'unknown failure').replaceAll(raw, '[REDACTED]'));
+  const status = Number(error?.response?.status);
+  console.error(status > 0 ? `OpenServ HTTP ${status}` : 'OpenServ trigger failed (details withheld to protect credentials).');
   process.exitCode = 1;
 }
