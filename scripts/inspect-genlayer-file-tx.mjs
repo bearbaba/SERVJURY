@@ -18,6 +18,12 @@ try {
   // bodies or private OpenServ update tokens are emitted.
   const fields=Object.keys(tx).filter(key=>/^(status|tx|exec|result|recipient|method|call|data|consensus|lifecycle)/i.test(key)).slice(0,50);
   console.log('GENLAYER_TRANSACTION_FIELD_NAMES',JSON.stringify(fields));
+  console.log('GENLAYER_SAFE_NESTED_SHAPES',JSON.stringify(Object.fromEntries(
+    ['data','consensus_data','tx_data','result'].map(key=>{
+      const value=tx[key];
+      return [key,{type:typeof value,keys:value&&typeof value==='object' ? Object.keys(value).slice(0,35) : []}];
+    })
+  )));
   if(tx.txDataDecoded && typeof tx.txDataDecoded==='object') {
     console.log('GENLAYER_DECODED_FIELD_NAMES',JSON.stringify(Object.keys(tx.txDataDecoded).slice(0,25)));
   }
