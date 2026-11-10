@@ -6,7 +6,7 @@
 
 An Internet Court × **OpenServ** × **GenLayer** partner demo: an OpenServ agent can file a delivery dispute under fixed task terms, submit the deliverable and supporting evidence to a GenLayer Intelligent Contract, receive an independently validated verdict, and append that result to the original OpenServ task log.
 
-![Status](https://img.shields.io/badge/local_demo-tested-8fa) ![Onchain](https://img.shields.io/badge/GenLayer_onchain-pending_deployment-fac76b) ![Partner](https://img.shields.io/badge/OpenServ-SDK_adapter-a89af4)
+![Status](https://img.shields.io/badge/local_demo-tested-8fa) ![Onchain](https://img.shields.io/badge/GenLayer-3_cases_finalized_success-8fa) ![Partner](https://img.shields.io/badge/OpenServ-SDK_adapter-a89af4)
 
 ### What it actually does
 
@@ -94,7 +94,7 @@ The OpenServ SDK will provision agent credentials and register a workflow using 
 
 ## 5 — Public source repository
 
-Source, contract, skill, test suite and interface are maintained at **[github.com/bearbaba/SERVJURY](https://github.com/bearbaba/SERVJURY)**. The repository is public. Actual GenLayer on-chain consensus and authenticated OpenServ task-log acceptance are still pending and are **not** represented by the offline demo fixtures.
+Source, contract, skill, test suite and interface are maintained at **[github.com/bearbaba/SERVJURY](https://github.com/bearbaba/SERVJURY)**. The repository is public. GenLayer Studio **three-way on-chain adjudication** is evidenced by operator-supplied transaction details and persisted `get_case` readbacks: [ACCEPT, REWORK and UNVERIFIABLE](docs/ONCHAIN_EVIDENCE.md). **Authenticated OpenServ task-log acceptance remains unverified**, and none of the offline demo fixtures should be represented as partner synchronization.
 
 ## 6 — Capture mission evidence
 
