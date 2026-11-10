@@ -10,7 +10,8 @@
     "check": "npm test && python -m py_compile contracts/ServJury.py && python -m unittest discover -s tests -p 'test_*.py' -v",
     "agent": "node --env-file-if-exists=.env agent/openserv-agent.mjs",
     "task:openserv": "node --env-file-if-exists=.env scripts/run-openserv-task.mjs",
-    "task:inspect": "node --env-file-if-exists=.env scripts/inspect-openserv-tasks.mjs"
+    "task:inspect": "node --env-file-if-exists=.env scripts/inspect-openserv-tasks.mjs",
+    "task:detail": "node --env-file-if-exists=.env scripts/inspect-openserv-task-detail.mjs"
   },
   "dependencies": {
     "@openserv-labs/client": "2.5.3",
