@@ -1,0 +1,37 @@
+name: Zod v4 compatibility and vulnerability gate (experiment)
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - package.json
+      - src/**
+      - agent/**
+      - .github/workflows/zod-audit-experiment.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  audited-openserv-sdk:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install full production graph without running postinstall scripts
+        run: npm install --no-fund --no-audit --ignore-scripts
+      - name: Show Zod graph and npm audit
+        run: |
+          npm ls zod --all || true
+          npm audit --omit=dev --audit-level=high
+      - name: Test compatibility, including OpenServ agent offline construction
+        run: |
+          node --input-type=module -e "import { Agent } from '@openserv-labs/sdk'; import { z } from 'zod'; const a = new Agent({ systemPrompt:'no external communication' }); a.addCapability({name:'test_input', description:'offline only', inputSchema: z.object({message:z.string().max(64)}), run:async()=> 'ok'}); console.log('Agent construction with Zod 4 succeeded')"
+          npm run check
+          node --check agent/openserv-agent.mjs
+      - name: GenLayer Studio existing case read
+        run: node scripts/studionet-preflight.mjs
