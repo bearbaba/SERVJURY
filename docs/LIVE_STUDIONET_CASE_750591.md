@@ -33,3 +33,9 @@ npm run task:chain
 ```
 
 Both commands use a dummy public account and do not require the GenLayer private key.
+
+## Critical SDK compatibility fix following verified readback
+
+`genlayer-js@1.1.8` `waitForTransactionReceipt()` defaults to **`fullTransaction: false`**, which calls `simplifyTransactionReceipt` and strips `consensus_data.leader_receipt`. Merely updating `isFinalizedSuccess` to inspect leader receipts is insufficient if it receives the simplified receipt. The adapter now explicitly passes **`fullTransaction: true`**, verifies both `FINALIZED` and the actual GenVM execution, and uses `getTransaction` only as a read-only fallback if the receipt is incomplete. Regression tests assert the exact wait arguments and refuse conflicting or errored GenVM results.
+
+**This is a fix for future transaction confirmation, not evidence the cancelled OpenServ workflow was recovered.** Do not replay the completed case to test the patch. The actual `adjudicate_case` TX hash and confirmed OpenServ task-log writeback remain separate acceptance requirements.
