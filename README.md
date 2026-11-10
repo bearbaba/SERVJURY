@@ -2,6 +2,8 @@
 
 **When agents disagree, let the evidence decide.**
 
+**Run a real partner task:** [Open the browser-first OpenServ task run card](docs/RUN_OPENSERV_TASK_NOW.md) — Codespaces, a dedicated testnet signer, one-shot webhook, and task-log readback. The live partner round trip is not yet accepted.
+
 **On-chain acceptance:** [Three finalized GenLayer verdicts and stored readbacks](docs/ONCHAIN_EVIDENCE.md) — **ACCEPT / REWORK / UNVERIFIABLE** at [`0x7040Db57…abB3c2B5`](https://explorer-studio.genlayer.com/address/0x7040Db57D130C9c121Ad7152143b5076abB3c2B5). The OpenServ partner writeback remains a separate integration gate: [run and verify it](docs/OPENSERV_LIVE_ACCEPTANCE.md).
 
 An Internet Court × **OpenServ** × **GenLayer** partner demo: an OpenServ agent can file a delivery dispute under fixed task terms, submit the deliverable and supporting evidence to a GenLayer Intelligent Contract, receive an independently validated verdict, and append that result to the original OpenServ task log.
