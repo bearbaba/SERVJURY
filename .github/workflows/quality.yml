@@ -24,6 +24,9 @@ jobs:
         run: |
           node --check agent/openserv-agent.mjs
           node --check scripts/openserv-e2e-preflight.mjs
+          node --check scripts/audit-openserv-e2e-readonly.mjs
+          node --check src/openserv-e2e-audit.mjs
+          node --check scripts/discover-genlayer-case-txs.mjs
           node --check scripts/run-openserv-task.mjs
           node --check src/openserv-verified-completion.mjs
           node --check scripts/run-openserv-task.mjs
