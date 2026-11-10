@@ -36,6 +36,7 @@ class Public:
     @staticmethod
     def view(fn): return fn
 fake = types.ModuleType('genlayer')
+fake.gl=fake
 fake.allow_storage=lambda cls:cls
 fake.Contract=Contract
 fake.TreeMap=dict
