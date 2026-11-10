@@ -7,6 +7,7 @@ import { requireOpenServUserApiKey, explainPlatformAuthError } from '../src/open
 import { z } from 'zod';
 import { fileLiveCase, judgeLiveCase, readLiveCase } from '../src/genlayer.mjs';
 import { originalWebhookEvidence } from '../src/openserv-trusted-input.mjs';
+import { stableTaskIdentity, verifyLivePlatformTask } from '../src/openserv-stable-identity.mjs';
 import { runTaskReview } from '../src/openserv-bridge.mjs';
 
 if (process.env.ENABLE_LIVE_TRANSACTIONS !== '1') {
@@ -17,6 +18,8 @@ if (process.env.ENABLE_LIVE_TRANSACTIONS !== '1') {
 // Only one review and one writeback may be in-flight per task in this process.
 const inFlight = new Map();
 const completedInProcess = new Map();
+let activeWorkflowId = 0;
+let activeAgentId = 0;
 
 const agent = new Agent({
   systemPrompt: 'You are SERVJURY, a neutral delivery-review relay. Never invent or revise an on-chain verdict. Only report finalized chain state.',
@@ -33,18 +36,35 @@ agent.addCapability({
     if (action?.task?.id === undefined || action?.workspace?.id === undefined) {
       return JSON.stringify({ status: 'NOT_VERIFIED', reason: 'Authenticated OpenServ task context missing' });
     }
-    const workspaceId = action.workspace.id;
-    const taskId = action.task.id;
-    const taskKey = JSON.stringify([workspaceId, taskId]);
+    let workflowId, taskId;
+    try {
+      ({ workflowId, taskId } = stableTaskIdentity(action, {
+        workflowId: activeWorkflowId, agentId: activeAgentId,
+      }));
+    } catch {
+      console.error('SERVJURY could not verify canonical OpenServ task identity.');
+      return JSON.stringify({status:'NOT_VERIFIED',reason:'Stable numeric OpenServ task identity is ambiguous or unavailable'});
+    }
+    const taskKey = JSON.stringify([workflowId, taskId]);
     if (completedInProcess.has(taskKey)) return completedInProcess.get(taskKey);
     if (inFlight.has(taskKey)) return inFlight.get(taskKey);
     const work = (async () => {
+      // A canonical task is confirmed by the authenticated platform API,
+      // not by per-invocation update tokens from the agent runtime. The task
+      // must be assigned to this agent and not waiting for human assistance.
+      const liveTask = await new PlatformClient({ apiKey: userApiKey }).tasks.get({
+        workflowId, id: taskId,
+      });
+      verifyLivePlatformTask(liveTask, {
+        taskId, agentId: activeAgentId,
+        expectedDescription: action.task.description,
+      });
       // The OpenServ orchestration model added a calculated verdict to args
       // during the first live run. Ignore args as evidence authority; only
       // use the original unmodified webhook event from the authenticated task.
       const input = originalWebhookEvidence(action, taskId);
       const receipt = await runTaskReview({
-        workspaceId, taskId, input,
+        workspaceId: workflowId, taskId, input,
         allowFirstFiling: process.env.ALLOW_FIRST_FILING === '1',
         readCase: readLiveCase,
         fileCase: fileLiveCase,
@@ -55,7 +75,7 @@ agent.addCapability({
       const body = JSON.stringify(receipt);
       try {
         await this.addLogToTask({
-          workspaceId, taskId,
+          workspaceId: workflowId, taskId,
           severity: receipt.verdict === 'ACCEPT' ? 'info' : 'warning',
           type: 'text', body,
         });
@@ -142,6 +162,8 @@ try {
 if (!provisioned?.agentId || !provisioned?.workflowId) {
   throw new Error('OpenServ provisioning did not return agent and workflow IDs.');
 }
+activeWorkflowId = Number(provisioned.workflowId);
+activeAgentId = Number(provisioned.agentId);
 console.log(`SERVJURY OpenServ provisioned: agentId=${provisioned.agentId}, workflowId=${provisioned.workflowId}`);
 // The platform returned a workflowId. Use its API key-authenticated trigger
 // discovery via TriggersAPI; never print or save its webhook token in a text
