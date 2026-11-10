@@ -14,7 +14,8 @@
     "@openserv-labs/client": "latest",
     "@openserv-labs/sdk": "latest",
     "genlayer-js": "2.0.0-rc.2",
-    "zod": "latest"
+    "zod": "latest",
+    "tsx": "4.23.15"
   },
   "engines": {
     "node": ">=22"
