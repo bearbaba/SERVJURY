@@ -6,3 +6,6 @@ __pycache__/
 .DS_Store
 .tmp/
 .openserv-trigger-url
+
+# Private local at-most-once OpenServ receipt handoff marker
+.servjury-handoff-attempt-*.lock
