@@ -2,7 +2,8 @@
 // synthetic Studio fixture task IDs. No funds, escrow or automatic payouts.
 import { Agent, run } from '@openserv-labs/sdk';
 import { writeFileSync } from 'node:fs';
-import { provision, triggers } from '@openserv-labs/client';
+import { PlatformClient, provision, triggers } from '@openserv-labs/client';
+import { requireOpenServUserApiKey, explainPlatformAuthError } from '../src/openserv-auth.mjs';
 import { z } from 'zod';
 import { fileLiveCase, judgeLiveCase, readLiveCase } from '../src/genlayer.mjs';
 import { validateCase } from '../src/engine.mjs';
@@ -48,7 +49,23 @@ agent.addCapability({
   },
 });
 
-const provisioned = await provision({
+// OpenServ account authentication is separate from GENLAYER_PRIVATE_KEY.
+// The OpenServ SIWE nonce route returned 404 in the operator's live run.
+// Never let provision() silently generate a new OpenServ wallet or retry nonce.
+const userApiKey = requireOpenServUserApiKey(process.env.OPENSERV_USER_API_KEY);
+try {
+  const platform = new PlatformClient({ apiKey: userApiKey });
+  await platform.agents.list(); // Read-only platform credential check.
+  console.log('OpenServ user API key: accepted by read-only platform preflight.');
+} catch (error) {
+  console.error(explainPlatformAuthError(error));
+  process.exit(1);
+}
+
+let provisioned;
+try {
+  provisioned = await provision({
+  userApiKey,
   agent: {
     instance: agent,
     name: 'SERVJURY — Internet Court Review',
@@ -67,7 +84,11 @@ const provisioned = await provision({
     }),
     task: { description: 'Use adjudicate_delivery to return a finalized GenLayer verdict to the original task log.' },
   },
-});
+  });
+} catch (error) {
+  console.error('OpenServ agent/workflow registration failed:', explainPlatformAuthError(error));
+  process.exit(1);
+}
 // Agent instance binding attaches the provisioned API key and auth token.
 // run(agent) is the documented OpenServ tunnel API for this SDK version.
 // Do not print provisioned.apiKey, authToken, wallet keys or webhook tokens.
