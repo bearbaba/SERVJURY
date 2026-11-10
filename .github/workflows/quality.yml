@@ -1,0 +1,34 @@
+name: SERVJURY quality gates
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  tests:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+      - name: Check source syntax
+        run: |
+          node --check agent/openserv-agent.mjs
+          node --check src/openserv-bridge.mjs
+          node --check src/genlayer.mjs
+          node --check demo/server.mjs
+      - name: Run isolated deterministic tests
+        run: npm run check
+      - name: No credentials in tracked files
+        run: |
+          test ! -f .env
+          test ! -f .openserv.json
