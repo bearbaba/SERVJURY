@@ -6,12 +6,17 @@ import { safeProvisionLogger } from '../src/openserv-safe-logging.mjs';
 import { requireOpenServUserApiKey, explainPlatformAuthError } from '../src/openserv-auth.mjs';
 import { z } from 'zod';
 import { fileLiveCase, judgeLiveCase, readLiveCase } from '../src/genlayer.mjs';
-import { validateCase } from '../src/engine.mjs';
+import { originalWebhookEvidence } from '../src/openserv-trusted-input.mjs';
 import { runTaskReview } from '../src/openserv-bridge.mjs';
 
 if (process.env.ENABLE_LIVE_TRANSACTIONS !== '1') {
   throw new Error('Set ENABLE_LIVE_TRANSACTIONS=1 with an explicit GenLayer network and dedicated test signer.');
 }
+
+// OpenServ may invoke a capability more than once for a single task.
+// Only one review and one writeback may be in-flight per task in this process.
+const inFlight = new Map();
+const completedInProcess = new Map();
 
 const agent = new Agent({
   systemPrompt: 'You are SERVJURY, a neutral delivery-review relay. Never invent or revise an on-chain verdict. Only report finalized chain state.',
@@ -26,26 +31,64 @@ agent.addCapability({
   }),
   async run({ args, action }) {
     if (action?.task?.id === undefined || action?.workspace?.id === undefined) {
-      throw new Error('Authenticated OpenServ task and workspace context required.');
+      return JSON.stringify({ status: 'NOT_VERIFIED', reason: 'Authenticated OpenServ task context missing' });
     }
     const workspaceId = action.workspace.id;
     const taskId = action.task.id;
-    const input = validateCase({ ...args, taskId: String(taskId) });
-    const receipt = await runTaskReview({
-      workspaceId, taskId, input,
-      allowFirstFiling: process.env.ALLOW_FIRST_FILING === '1',
-      readCase: readLiveCase,
-      fileCase: fileLiveCase,
-      judgeCase: judgeLiveCase,
-    });
-    // The log is the partner writeback, not an automatic payment or task completion.
-    // The deterministic receiptId enables manual de-duplication in a task audit.
-    await this.addLogToTask({
-      workspaceId, taskId,
-      severity: receipt.verdict === 'ACCEPT' ? 'info' : 'warning',
-      type: 'text', body: JSON.stringify(receipt),
-    });
-    return JSON.stringify(receipt);
+    const taskKey = JSON.stringify([workspaceId, taskId]);
+    if (completedInProcess.has(taskKey)) return completedInProcess.get(taskKey);
+    if (inFlight.has(taskKey)) return inFlight.get(taskKey);
+    const work = (async () => {
+      // The OpenServ orchestration model added a calculated verdict to args
+      // during the first live run. Ignore args as evidence authority; only
+      // use the original unmodified webhook event from the authenticated task.
+      const input = originalWebhookEvidence(action, taskId);
+      const receipt = await runTaskReview({
+        workspaceId, taskId, input,
+        allowFirstFiling: process.env.ALLOW_FIRST_FILING === '1',
+        readCase: readLiveCase,
+        fileCase: fileLiveCase,
+        judgeCase: judgeLiveCase,
+      });
+      // The deterministic receipt is the partner writeback. Never output a
+      // verdict unless it was read from a finalized on-chain state.
+      const body = JSON.stringify(receipt);
+      try {
+        await this.addLogToTask({
+          workspaceId, taskId,
+          severity: receipt.verdict === 'ACCEPT' ? 'info' : 'warning',
+          type: 'text', body,
+        });
+      } catch (error) {
+        const failure = JSON.stringify({
+          status: 'NOT_VERIFIED', reason: 'OpenServ task log unconfirmed; do not blindly retry',
+          caseId: receipt.caseId, receiptId: receipt.receiptId,
+        });
+        completedInProcess.set(taskKey, failure);
+        console.error('SERVJURY task log not confirmed; inspect OpenServ before any repeat.');
+        return failure;
+      }
+      completedInProcess.set(taskKey, body);
+      console.log('SERVJURY authenticated OpenServ receipt written:', body);
+      return body;
+    })();
+    inFlight.set(taskKey, work);
+    try {
+      return await work;
+    } catch (error) {
+      // The SDK logs the entire task action, including update tokens, on an
+      // uncaught capability exception. Return a safe, non-verdict failure
+      // instead; never pretend the chain decision has been recorded.
+      console.error('SERVJURY review not finalized; no verified verdict written to task log.');
+      return JSON.stringify({
+        status: 'NOT_VERIFIED',
+        reason: error?.txHash
+          ? 'GenLayer transaction outcome uncertain; inspect chain before retry'
+          : 'GenLayer read/filing/adjudication was not verified; inspect logs and chain',
+      });
+    } finally {
+      inFlight.delete(taskKey);
+    }
   },
 });
 
