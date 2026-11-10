@@ -10,6 +10,7 @@
     "check": "npm test && python -m py_compile contracts/ServJury.py && python -m unittest discover -s tests -p 'test_*.py' -v",
     "agent": "node --env-file-if-exists=.env agent/openserv-agent.mjs",
     "task:openserv": "node --env-file-if-exists=.env scripts/run-openserv-task.mjs",
+    "e2e:preflight": "node --env-file-if-exists=.env scripts/openserv-e2e-preflight.mjs",
     "task:inspect": "node --env-file-if-exists=.env scripts/inspect-openserv-tasks.mjs",
     "task:detail": "node --env-file-if-exists=.env scripts/inspect-openserv-task-detail.mjs",
     "task:chain": "node --env-file-if-exists=.env scripts/audit-onchain-tasks.mjs",
