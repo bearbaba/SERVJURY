@@ -14,6 +14,13 @@ const client=createClient({chain:studionet,account:createAccount('0x'+'11'.repea
 console.log('SERVJURY_PUBLIC_TX_INSPECT', JSON.stringify({chainId:61999,hash,contract:addr}));
 try {
   const tx=await client.getTransaction({hash});
+  // Field *names only*. No original calldata, evidence, sender keys, trace
+  // bodies or private OpenServ update tokens are emitted.
+  const fields=Object.keys(tx).filter(key=>/^(status|tx|exec|result|recipient|method|call|data|consensus|lifecycle)/i.test(key)).slice(0,50);
+  console.log('GENLAYER_TRANSACTION_FIELD_NAMES',JSON.stringify(fields));
+  if(tx.txDataDecoded && typeof tx.txDataDecoded==='object') {
+    console.log('GENLAYER_DECODED_FIELD_NAMES',JSON.stringify(Object.keys(tx.txDataDecoded).slice(0,25)));
+  }
   // Stable Studio RPC is older than the latest API reference. Try its
   // documented read-only receipt and transaction-data endpoints in order.
   // Never print error bodies, raw call arguments or any private credentials.
