@@ -9,7 +9,7 @@ Two real GenLayer transactions have been located:
 - `file_case`: `0x318fba389317e3b1986568273ca3c9cc3008aa4ea18ffa61ab11a134b5553376` — FINALIZED, GenVM leader execution SUCCESS/SUCCESS
 - `adjudicate_case`: `0xfaf3cb1fc7bc95e81c9e6950ceeee8ee640aaeb3010ab6a4c2ec6a2612c50406` — FINALIZED, MAJORITY_AGREE, but leader execution SUCCESS/ERROR (ambiguous under strict-success policy)
 
-**Never say the adjudication transaction has unanimously verified successful GenVM execution.** The persisted DECIDED readback confirms the verdict independently. No new adjudication is necessary or permitted on that case. OpenServ still needs the same task's receipt log and a resolved Human Assistance state before end-to-end acceptance can be claimed.
+**Never say the adjudication transaction has unanimously verified successful GenVM execution.** The persisted DECIDED readback confirms the verdict independently. No new adjudication is necessary or permitted on that case. OpenServ has now **acknowledged one log-only receipt write** to the same task; verifying the entry in the OpenServ activity UI and resolving Human Assistance remain necessary before end-to-end acceptance can be claimed.
 
 ## Step 1 — safe PREVIEW without writing to OpenServ
 
@@ -33,9 +33,9 @@ Do **not** manually invent the verdict or authorize a retrigger. The correct ref
 
 If OpenServ has **already** recorded a GenLayer verdict in its task log, STOP; don't write a duplicate.
 
-## Step 3 — OPTIONAL explicit one-shot log write to same task
+## Step 3 — Completed once: explicit log-only handoff to the same task
 
-Only after inspecting the original Human Assistance request, confirming the task has **no existing SERVJURY receipt log**, and explicitly choosing to add just one authenticated log entry, use:
+**Historical command only — already executed successfully once. DO NOT RUN AGAIN.**
 
 ```bash
 SERVJURY_CONFIRM_HANDOFF=ONE_LOG_ONLY npm run task:handoff -- --write-log
@@ -52,3 +52,21 @@ This operator-only log handoff might be **rejected** by OpenServ if its task sta
 ## Acceptance remaining
 
 Confirm the receipt appears in the existing task **750591**, its verdict matches `get_case`, and the same OpenServ Run Mode session reaches its appropriate terminal success status. Otherwise classify the integration **ONCHAIN_VERDICT_CONFIRMED / OPENSERV_WRITEBACK_UNVERIFIED**. Do not create a replacement task as a way to pretend the original workflow completed.
+
+## Operator-observed OpenServ receipt handoff — 2026-11-10
+
+The operator ran the new script on the original Codespace, after `git pull --ff-only` to commit `b2a82e01` and **77/77** checks PASS (72 JS, 5 Python). The **read-only** preflight confirmed:
+
+```text
+EXISTING_TASK_HANDOFF_PREFLIGHT {"workflowId":14061,"taskId":750591,"agentId":4953,"caseId":"sj_745eae3d3d0921304a80ec55","taskStatus":"human-assistance-required","onchainStatus":"DECIDED","verdict":"REWORK","receiptId":"servjury-2a9e57000de6303a","filingExecution":"FINISHED_WITH_RETURN","adjudicationExecution":"MIXED_SUCCESS_ERROR_NOT_UNANIMOUSLY_CONFIRMED","target":"existing OpenServ task log ONLY"}
+```
+
+The operator then executed **one** explicitly authorized log-only request and received:
+
+```text
+OPEN_SERV_LOG_WRITE_ACKNOWLEDGED {"workflowId":14061,"taskId":750591,"receiptId":"servjury-2a9e57000de6303a"}
+```
+
+This acknowledgment means the OpenServ log write API returned without error for the original **task 750591**. It **does not** prove the receipt is visible in OpenServ's task activity UI, task output is populated, Human Assistance is resolved, or the Run Mode session completed. The task previously remained `human-assistance-required` with no output. Verification of OpenServ UI history and terminal success remains outstanding.
+
+**Important:** Do **NOT** repeat `SERVJURY_CONFIRM_HANDOFF=ONE_LOG_ONLY npm run task:handoff -- --write-log`. The single-attempt marker `.servjury-handoff-attempt-750591.lock` is intentional and should remain intact. Do not retry the webhook or send new GenLayer writes for this already-DECIDED case. In OpenServ Run Mode inspect the existing Task 750591 activity/log for the exact receipt ID, then handle the still-open Human Assistance prompt by referencing this existing proof without inventing a verdict or re-adjudicating.

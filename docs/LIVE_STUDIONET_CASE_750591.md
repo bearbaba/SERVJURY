@@ -17,7 +17,7 @@
 
 - The public contract-history query now locates the `adjudicate_case` transaction **`0xfaf3cb1fc7bc95e81c9e6950ceeee8ee640aaeb3010ab6a4c2ec6a2612c50406`** for the same case ID. The decoded calldata contains the `adjudicate_case` method marker and case ID; consensus is **FINALIZED / MAJORITY_AGREE**. However, its two `leader_receipt[].execution_result` entries are **SUCCESS and ERROR**, so the strict `isFinalizedSuccess` guard correctly reports **UNCONFIRMED**, rather than falsely asserting unanimous GenVM success. The persisted `get_case` view independently proves **DECIDED / REWORK**.
 - The adjudication transaction's **unambiguous successful GenVM execution status remains unverified** because these receipt entries conflict. The on-chain verdict is persisted, but the transaction must not be mislabeled `FINALIZED / SUCCESS`.
-- The authenticated OpenServ task log writeback containing the on-chain verdict, receipt ID and referenced transaction hashes. The operator's local Agent previously reported `review not finalized; no verified verdict written to task log` after a false-negative receipt check.
+- The OpenServ task log writeback is **now acknowledged** by the authenticated API for Task 750591, receipt `servjury-2a9e57000de6303a`. The task activity/UI must still be independently inspected to prove the entry persisted and the workflow was resumed; the earlier Agent log had reported an unverified receipt.
 - Whether OpenServ's corresponding **run session** was eventually completed. On the latest operator read-only inspection on 2026-11-10, workflow node **750591** was **human-assistance-required** with no output or attachments; previous observations had shown `cancelled`. Workflow task-node status is distinct from run/session status, and neither state is evidence of a successful task log writeback.
 
 ## Root cause and tested fix
@@ -39,7 +39,7 @@ Both commands use a dummy public account and do not require the GenLayer private
 
 `genlayer-js@1.1.8` `waitForTransactionReceipt()` defaults to **`fullTransaction: false`**, which calls `simplifyTransactionReceipt` and strips `consensus_data.leader_receipt`. Merely updating `isFinalizedSuccess` to inspect leader receipts is insufficient if it receives the simplified receipt. The adapter now explicitly passes **`fullTransaction: true`**, verifies both `FINALIZED` and the actual GenVM execution, and uses `getTransaction` only as a read-only fallback if the receipt is incomplete. Regression tests assert the exact wait arguments and refuse conflicting or errored GenVM results.
 
-**This is a fix for future transaction confirmation, not evidence the cancelled OpenServ workflow was recovered.** Do not replay the completed case to test the patch. The `adjudicate_case` hash has now been located, but its **conflicting GenVM execution receipts** and the missing authenticated OpenServ task-log writeback remain separate acceptance gaps.
+**This is a fix for future transaction confirmation, not evidence the cancelled OpenServ workflow was recovered.** Do not replay the completed case to test the patch. The `adjudicate_case` hash has now been located, but its **conflicting GenVM execution receipts** and the still-unverified OpenServ task activity readback / terminal completion remain separate acceptance gaps. The authenticated log API did acknowledge one request.
 
 
 ## Read-only verification record — 2026-11-10 14:31 UTC
@@ -65,3 +65,21 @@ npm run tx:history
 SERVJURY_INSPECT_TX_HASH=0xfaf3cb1fc7bc95e81c9e6950ceeee8ee640aaeb3010ab6a4c2ec6a2612c50406 npm run tx:inspect
 npm run task:detail
 ```
+
+## Operator-observed OpenServ receipt handoff — 2026-11-10
+
+The operator ran the new script on the original Codespace, after `git pull --ff-only` to commit `b2a82e01` and **77/77** checks PASS (72 JS, 5 Python). The **read-only** preflight confirmed:
+
+```text
+EXISTING_TASK_HANDOFF_PREFLIGHT {"workflowId":14061,"taskId":750591,"agentId":4953,"caseId":"sj_745eae3d3d0921304a80ec55","taskStatus":"human-assistance-required","onchainStatus":"DECIDED","verdict":"REWORK","receiptId":"servjury-2a9e57000de6303a","filingExecution":"FINISHED_WITH_RETURN","adjudicationExecution":"MIXED_SUCCESS_ERROR_NOT_UNANIMOUSLY_CONFIRMED","target":"existing OpenServ task log ONLY"}
+```
+
+The operator then executed **one** explicitly authorized log-only request and received:
+
+```text
+OPEN_SERV_LOG_WRITE_ACKNOWLEDGED {"workflowId":14061,"taskId":750591,"receiptId":"servjury-2a9e57000de6303a"}
+```
+
+This acknowledgment means the OpenServ log write API returned without error for the original **task 750591**. It **does not** prove the receipt is visible in OpenServ's task activity UI, task output is populated, Human Assistance is resolved, or the Run Mode session completed. The task previously remained `human-assistance-required` with no output. Verification of OpenServ UI history and terminal success remains outstanding.
+
+**Important:** Do **NOT** repeat `SERVJURY_CONFIRM_HANDOFF=ONE_LOG_ONLY npm run task:handoff -- --write-log`. The single-attempt marker `.servjury-handoff-attempt-750591.lock` is intentional and should remain intact. Do not retry the webhook or send new GenLayer writes for this already-DECIDED case. In OpenServ Run Mode inspect the existing Task 750591 activity/log for the exact receipt ID, then handle the still-open Human Assistance prompt by referencing this existing proof without inventing a verdict or re-adjudicating.
