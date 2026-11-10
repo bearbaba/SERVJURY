@@ -10,6 +10,7 @@ import { fileLiveCase, judgeLiveCase, readLiveCase } from '../src/genlayer.mjs';
 import { originalWebhookEvidence } from '../src/openserv-trusted-input.mjs';
 import { stableTaskIdentity, verifyLivePlatformTask } from '../src/openserv-stable-identity.mjs';
 import { runTaskReview } from '../src/openserv-bridge.mjs';
+import { SERVJURY_TASK_DESCRIPTION, SERVJURY_TASK_BODY } from '../src/openserv-task-instructions.mjs';
 
 if (process.env.ENABLE_LIVE_TRANSACTIONS !== '1') {
   throw new Error('Set ENABLE_LIVE_TRANSACTIONS=1 with an explicit GenLayer network and dedicated test signer.');
@@ -165,7 +166,11 @@ try {
         evidence: { type: 'string', description: 'Inspectable supporting evidence' },
       },
     }),
-    task: { description: 'Use adjudicate_delivery to return a finalized GenLayer verdict to the original task log.' },
+    // These fields matter for NEW explicitly provisioned workflows only.
+    // Cached existing workflow #14061 is deliberately not re-synced.
+    // The platform may separately fail when restoring Human Assistance
+    // message history; this body does not claim to fix that provider error.
+    task: { description: SERVJURY_TASK_DESCRIPTION, body: SERVJURY_TASK_BODY },
   },
   });
 } catch (error) {
