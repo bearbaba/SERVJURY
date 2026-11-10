@@ -17,8 +17,9 @@ try {
     status: String(task.status ?? 'not-provided'),
     assigneeAgentId: task.assigneeAgentId ?? task.assignee ?? null,
   }));
-  console.log('READ_ONLY: OpenServ workflow',workflowId,'task count:',tasks.length);
+  console.log('READ_ONLY: OpenServ workflow',workflowId,'current configured task nodes:',tasks.length);
   console.log(JSON.stringify(rows,null,2));
+  console.log('These IDs and statuses describe workflow task nodes, NOT webhook execution/session history.');
   console.log('No task created, updated or triggered.');
 } catch(error) {
   const status = Number(error?.response?.status);
