@@ -26,6 +26,13 @@ try {
   )));
   const lr=tx.consensus_data?.leader_receipt;
   console.log('GENLAYER_LEADER_RECEIPT_FIELD_NAMES',JSON.stringify(lr && typeof lr==='object' ? Object.keys(lr).slice(0,50) : []));
+  if(Array.isArray(lr)) console.log('GENLAYER_LEADER_RECEIPT_SHAPE',JSON.stringify(lr.slice(0,8).map((value,index)=>({
+    index,type:typeof value,isSmallInteger:typeof value==='number' && Number.isInteger(value) && value>=0 && value<=5,
+    smallInteger:typeof value==='number' && Number.isInteger(value) && value>=0 && value<=5 ? value : null,
+    objectKeys:value && typeof value==='object' ? Object.keys(value).slice(0,20) : [],
+    length:typeof value==='string' ? value.length : null,
+  }))));
+
   if(tx.txDataDecoded && typeof tx.txDataDecoded==='object') {
     console.log('GENLAYER_DECODED_FIELD_NAMES',JSON.stringify(Object.keys(tx.txDataDecoded).slice(0,25)));
   }
