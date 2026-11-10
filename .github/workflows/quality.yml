@@ -46,4 +46,4 @@ jobs:
       - name: Verify actual package exports without credentials
         run: |
           node --input-type=module -e "import { Agent, run } from '@openserv-labs/sdk'; import { provision, triggers } from '@openserv-labs/client'; if (![Agent,run,provision,triggers.webhook].every(x => typeof x === 'function')) process.exit(1)"
-          node --input-type=module -e "import { createClient, createAccount, isSuccessful } from 'genlayer-js'; import { studionet } from 'genlayer-js/chains'; if (![createClient,createAccount,isSuccessful].every(x => typeof x === 'function') || !studionet) process.exit(1)"
+          node --input-type=module -e "import { createClient, createAccount } from 'genlayer-js'; import { studionet } from 'genlayer-js/chains'; const client = createClient({chain:studionet,account:createAccount('0x'+'11'.repeat(32))}); for (const name of ['readContract','writeContract','waitForFinalization','estimateTransactionFeesForWrite']) if (typeof client[name] !== 'function') throw Error('Missing SDK method: '+name)"
