@@ -34,24 +34,39 @@ export async function makeClient() {
 
 // Explicitly request complete receipts: genlayer-js v1 defaults to the
 // simplified format, which loses Studionet's leader GenVM execution result.
-export async function confirmFinalizedWrite(client, txHash, TransactionStatus) {
-  // Waiting for FINALIZED can throw because of a timeout, unavailable RPC,
-  // or a transient SDK transport error even AFTER a TX has finalized.
-  // Recover only by reading the SAME hash; never submit or re-sign a write.
+// Bounded backoff for eventual-consistency reads of the ORIGINAL signed hash.
+// No retries of writeContract are ever attempted. Maximum extra pause: 15.5s.
+const FINALITY_READ_DELAYS_MS=Object.freeze([0,500,1000,2000,4000,8000]);
+const sleepDefault=ms=>new Promise(resolve=>setTimeout(resolve,ms));
+export async function confirmFinalizedWrite(client, txHash, TransactionStatus, {sleep=sleepDefault}={}) {
+  // Waiting can throw from an SDK timeout, transient RPC error or partial
+  // receipt even if the transaction later finalizes. Never equate a thrown
+  // wait with failed on-chain execution.
   try {
     const receipt=await client.waitForTransactionReceipt({
       hash:txHash, status:TransactionStatus.FINALIZED, fullTransaction:true,
     });
     if(isFinalizedSuccess(receipt)) return receipt;
   } catch {
-    // A failed wait is NOT proof that the signed TX failed. The read below
-    // may observe a success that finalized before the wait stopped.
+    // Continue with read-only recovery of precisely the already-signed hash.
   }
-  try {
-    const stored=await client.getTransaction({hash:txHash}); // read-only, same hash
-    if(isFinalizedSuccess(stored)) return stored;
-  } catch {
-    // Preserve the original hash on the error for safe manual inspection.
+  for(const delay of FINALITY_READ_DELAYS_MS) {
+    if(delay)await sleep(delay);
+    try {
+      const stored=await client.getTransaction({hash:txHash});
+      if(isFinalizedSuccess(stored))return stored;
+      // A finalized, explicit GenVM error or inconsistent validators is
+      // not a late success. Stop and inspect rather than waiting/re-signing.
+      if(String(stored?.statusName||'').toUpperCase()==='FINALIZED') {
+        const leader=stored?.consensus_data?.leader_receipt;
+        const outcomes=Array.isArray(leader)
+          ?leader.map(x=>String(x?.execution_result||'').toUpperCase()):[];
+        if(outcomes.includes('ERROR') || String(stored?.txExecutionResultName||'').toUpperCase()==='FINISHED_WITH_ERROR') break;
+      }
+    } catch {
+      // A failed lookup can be transient; the next probe still only reads the
+      // same known TX hash. Stop after the finite probe budget.
+    }
   }
   const error=new Error('Write finalized execution not confirmed successful by complete GenVM receipt');
   error.txHash=txHash;
