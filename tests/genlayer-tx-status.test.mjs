@@ -20,3 +20,12 @@ test('missing recipient or ambiguous execution fail closed',()=>{
   assert.equal(summarizeStoredGenLayerTx({statusName:'FINALIZED',txExecutionResultName:'FINISHED_WITH_RETURN'},addr).result,'RECIPIENT_UNVERIFIED');
   assert.equal(summarizeStoredGenLayerTx(tx('FINALIZED','UNKNOWN'),addr).result,'FINALIZED_NOT_PROVEN_SUCCESS');
 });
+
+test('SDK numeric GenVM execution result is authoritative when symbolic field absent',()=>{
+  assert.equal(summarizeStoredGenLayerTx({...tx('FINALIZED',undefined),txExecutionResult:1},addr).result,'FINALIZED_SUCCESS_CHECK_CASE_STATE');
+  assert.equal(summarizeStoredGenLayerTx({...tx('FINALIZED',undefined),txExecutionResult:2},addr).result,'FINALIZED_EXECUTION_ERROR');
+  assert.equal(summarizeStoredGenLayerTx({...tx('FINALIZED',undefined),txExecutionResult:0},addr).result,'FINALIZED_NOT_PROVEN_SUCCESS');
+});
+test('consensus majority result is not a GenVM execution result',()=>{
+  assert.equal(summarizeStoredGenLayerTx({...tx('FINALIZED',undefined),result:1},addr).result,'FINALIZED_NOT_PROVEN_SUCCESS');
+});
