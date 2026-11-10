@@ -32,3 +32,18 @@ jobs:
         run: |
           test ! -f .env
           test ! -f .openserv.json
+
+  partner-sdk-imports:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install documented OpenServ and GenLayer SDK packages
+        run: npm install --no-fund --no-audit --ignore-scripts
+      - name: Verify actual package exports without credentials
+        run: |
+          node --input-type=module -e "import { Agent, run } from '@openserv-labs/sdk'; import { provision, triggers } from '@openserv-labs/client'; if (![Agent,run,provision,triggers.webhook].every(x => typeof x === 'function')) process.exit(1)"
+          node --input-type=module -e "import { createClient, createAccount, isSuccessful } from 'genlayer-js'; import { studionet } from 'genlayer-js/chains'; if (![createClient,createAccount,isSuccessful].every(x => typeof x === 'function') || !studionet) process.exit(1)"
