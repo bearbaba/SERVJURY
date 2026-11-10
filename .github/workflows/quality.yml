@@ -46,6 +46,8 @@ jobs:
           node-version: '22'
       - name: Install documented OpenServ and GenLayer SDK packages
         run: npm install --no-fund --no-audit --ignore-scripts
+      - name: Audit production dependencies for High/Critical vulnerabilities
+        run: npm audit --omit=dev --audit-level=high
       - name: Show installed SDK versions
         run: npm ls @openserv-labs/sdk @openserv-labs/client genlayer-js zod --depth=0
       - name: Read existing finalized SERVJURY case from Studionet (read-only)
