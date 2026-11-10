@@ -23,6 +23,9 @@ jobs:
       - name: Check source syntax
         run: |
           node --check agent/openserv-agent.mjs
+          node --check scripts/openserv-e2e-preflight.mjs
+          node --check scripts/run-openserv-task.mjs
+          node --check src/openserv-verified-completion.mjs
           node --check scripts/run-openserv-task.mjs
           node --check src/openserv-bridge.mjs
           node --check src/genlayer.mjs

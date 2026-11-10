@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {SERVJURY_TASK_DESCRIPTION,SERVJURY_TASK_BODY} from '../src/openserv-task-instructions.mjs';
+import {SERVJURY_TASK_DESCRIPTION,SERVJURY_TASK_BODY,SERVJURY_TASK_INPUT} from '../src/openserv-task-instructions.mjs';
 
 test('new workflow has nonempty description and body for OpenServ task prompt',()=>{
   assert.ok(SERVJURY_TASK_DESCRIPTION.trim().length>=30);
@@ -13,4 +13,12 @@ test('new workflow has nonempty description and body for OpenServ task prompt',(
 test('future workflow task body does not claim stale GenLayer verdict or receipt',()=>{
   assert.doesNotMatch(SERVJURY_TASK_BODY, /0x[0-9a-fA-F]{64}|servjury-[a-f0-9]{16}/);
   assert.doesNotMatch(SERVJURY_TASK_BODY, /750591|14061/);
+});
+
+test('E2E workflow has an explicitly nonempty task input rather than SDK empty default',()=>{
+  assert.ok(SERVJURY_TASK_INPUT.trim().length>100);
+  assert.match(SERVJURY_TASK_INPUT,/authenticated webhook/i);
+  assert.match(SERVJURY_TASK_INPUT,/adjudicate_delivery/);
+  assert.ok(SERVJURY_TASK_INPUT.includes('\n'));
+  assert.doesNotMatch(SERVJURY_TASK_INPUT,/750591|14061/);
 });

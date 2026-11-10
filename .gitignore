@@ -9,3 +9,6 @@ __pycache__/
 
 # Private local at-most-once OpenServ receipt handoff marker
 .servjury-handoff-attempt-*.lock
+
+# At-most-once marker for the isolated E2E webhook session
+.servjury-e2e-trigger-attempt-*.lock
