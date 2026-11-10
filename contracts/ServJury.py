@@ -1,3 +1,5 @@
+# { "Depends": "py-genlayer:1jb45aa8ynh2a9c9xn3b7qqh8sm5q93hwfp7jqmwsfhh8jpz09h6" }
+
 """SERVJURY — Internet Court x OpenServ GenLayer delivery adjudicator.
 
 No funds are ever held or moved by this contract. Outcomes are advisory
@@ -7,7 +9,6 @@ is separately deployed and audited.
 import json
 from dataclasses import dataclass
 from genlayer import *
-import genlayer as gl
 
 
 @allow_storage
