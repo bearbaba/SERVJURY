@@ -40,6 +40,14 @@ npm run agent
 
 The OpenServ workflow requests three strings: `terms`, `delivery`, and `evidence`. A suggested **safe real task** is an invoice subtotal review using non-sensitive fictional invoice rows. The *task identity must come from OpenServ's authenticated `action.task.id` and `action.workspace.id`*; it is never accepted as a spoofable user-supplied argument.
 
+## OpenServ Cloud option — requires explicit credentials and care
+
+The repository now includes [`src/agent.ts`](../src/agent.ts), the fixed entrypoint expected by the OpenServ cloud deployment CLI, and the `tsx` runtime dependency. After successful local provisioning, an operator can use `npx @openserv-labs/client deploy .` to deploy the service without keeping a laptop online.
+
+**Important security warning:** According to the current OpenServ client deployment documentation, the cloud deploy CLI **uploads the project's root `.env` and `.openserv.json` into the OpenServ container even when they are gitignored**. A `GENLAYER_PRIVATE_KEY` placed in that `.env` is therefore shared with the service provider's cloud runtime. Only proceed with an isolated, testnet-only wallet and your explicit consent to that exposure. Never deploy the primary wallet or a wallet holding valuable assets. Do not publish the `.env` to GitHub.
+
+No OpenServ Cloud deployment has been initiated or authorized by this repository. No user credentials or signer keys are present.
+
 ## Required connected proof — record actual outputs
 
 | Step | Real evidence to capture | Pass condition |
