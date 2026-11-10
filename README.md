@@ -2,7 +2,7 @@
 
 **When agents disagree, let the evidence decide.**
 
-**Ready for GenLayer Studio?** [Open the paste-ready Studio run card](docs/STUDIO_RUN_NOW.md) — deploy from the GitHub source, run three signed adjudication cases, and capture real FINALIZED evidence. No local download required.
+**On-chain acceptance:** [Three finalized GenLayer verdicts and stored readbacks](docs/ONCHAIN_EVIDENCE.md) — **ACCEPT / REWORK / UNVERIFIABLE** at [`0x7040Db57…abB3c2B5`](https://explorer-studio.genlayer.com/address/0x7040Db57D130C9c121Ad7152143b5076abB3c2B5). The OpenServ partner writeback remains a separate integration gate: [run and verify it](docs/OPENSERV_LIVE_ACCEPTANCE.md).
 
 An Internet Court × **OpenServ** × **GenLayer** partner demo: an OpenServ agent can file a delivery dispute under fixed task terms, submit the deliverable and supporting evidence to a GenLayer Intelligent Contract, receive an independently validated verdict, and append that result to the original OpenServ task log.
 
@@ -30,7 +30,7 @@ OpenServ task context ─── submitted deliverable + evidence
      OpenServ task log includes final verdict
 ```
 
-The GenLayer verdict is a **recorded signal**, not a payment. No token transfer, escrow, automatic refund, or legal effect is implied. Evidence is submitted by the task participant and assessed against the terms; external provenance is not yet independently attested. OpenServ agent uses real task/workspace context, but platform calls require credentials and connectivity.
+The GenLayer verdict is a **recorded signal**, not a payment. The three displayed Studio acceptance cases use fictional inputs, not authenticated OpenServ task IDs. No token transfer, escrow, automatic refund, or legal effect is implied. Evidence is submitted by the task participant and assessed against the terms; external provenance is not yet independently attested. OpenServ agent uses real task/workspace context, but platform calls require credentials and connectivity.
 
 ## 1 — Run the polished offline demo (zero dependencies)
 
@@ -88,9 +88,9 @@ npm install
 ALLOW_FIRST_FILING=1 npm run agent
 ```
 
-The OpenServ SDK will provision agent credentials and register a workflow using its documented tunnel. Consult official [OpenServ SDK skill](https://github.com/openserv-labs/skills/blob/main/skills/openserv-agent-sdk/SKILL.md). A real invocation should include `terms`, `delivery`, `evidence` arguments; the task identity comes from OpenServ's authenticated action. Review your wallet funding and network settings before authorizing signed transactions. The agent never moves funds, never auto-retries an unknown write, and does not fake a successful verdict.
+The OpenServ SDK can provision an agent and a webhook workflow using its documented tunnel. Consult official [OpenServ SDK skill](https://github.com/openserv-labs/skills/blob/main/skills/openserv-agent-sdk/SKILL.md). A real invocation should include `terms`, `delivery`, `evidence` arguments; the task identity comes from OpenServ's authenticated action. Review your wallet funding and network settings before authorizing signed transactions. The agent never moves funds, never auto-retries an unknown write, and does not fake a successful verdict.
 
-**First live use requires manual verification**: OpenServ SDK/GenLayer package versions and chain configuration haven't been integration-tested here because package registry, Studio and credentials are not available in this environment.
+**Real partner acceptance is still required:** the bridge has isolated fail-closed tests and follows the documented OpenServ SDK APIs, but authenticated provisioning, signed task-linked GenLayer writes, and OpenServ `addLogToTask` readback have not been exercised here. [Use the actual-partner acceptance checklist](docs/OPENSERV_LIVE_ACCEPTANCE.md). Do not share wallet keys or platform credentials in GitHub or chat.
 
 ## 5 — Public source repository
 
