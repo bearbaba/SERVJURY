@@ -17,9 +17,9 @@ Never publish original error logs without removing the OpenServ workspace/task u
 1. Calibrate the hosted RPC missing-case response with **two read-only calls on the same deployed contract**: a known finalized Case A, and a guaranteed unfiled sentinel. Permit first filing only when the target matches the sentinel failure and the known read succeeds. `ALLOW_FIRST_FILING=1` and the deployed contract's immutable duplicate guard remain mandatory.
 2. Accept `terms`, `delivery`, and `evidence` **only from the authenticated task's original webhook event**, never edited/AI-generated capability args.
 3. Process each task once in flight, return sanitized `NOT_VERIFIED` on failure rather than allowing OpenServ SDK to dump tokens in error logs.
-4. Attach both the actual filing TX hash and actual adjudication TX hash to a successful OpenServ receipt and log finalized writes safely.
-5. Add a read-only `npm run task:inspect` command. It only lists task IDs and statuses for workflow **14061**; does not create a new task, write a task log or sign GenLayer TXs.
-6. Add deterministic regression tests and live Studionet read-only RPC-calibration CI (zero wallet keys).
+4. Commit only a domain-separated SHA-256 public task reference to the GenLayer contract; never place OpenServ task/workspace update tokens in immutable chain state or in receipt text. The original authenticated context is retained only during capability execution.\n5. Attach both the actual filing TX hash and actual adjudication TX hash to a successful OpenServ receipt and log finalized writes safely.
+6. Add a read-only `npm run task:inspect` command. It only lists task IDs and statuses for workflow **14061**; does not create a new task, write a task log or sign GenLayer TXs.
+7. Add deterministic regression tests and live Studionet read-only RPC-calibration CI (zero wallet keys).
 
 ## How to continue the existing attempt safely
 
@@ -48,7 +48,7 @@ Maintain the agent in one terminal. A second webhook execution creates a new tas
 
 - The original or a deliberately authorized new authenticated OpenServ task must successfully file to GenLayer, with a FINALIZED/SUCCESS `file_case` transaction.
 - GenLayer `adjudicate_case` must reach FINALIZED/SUCCESS with persisted DECIDED status and verdict readback.
-- The exact immutable evidence from the first webhook must match the on-chain case.
+- The exact immutable evidence from the first webhook must match the on-chain case, and the public task reference must match the SHA-256 digest of that task's private OpenServ execution context.
 - The same authenticated OpenServ task must have a task log containing `caseId`, `receiptId`, actual verdict, reason, and available transaction hashes.
 
 A plausible verdict from a local fixture or from OpenServ's orchestration LLM **does not** count as chain evidence.
