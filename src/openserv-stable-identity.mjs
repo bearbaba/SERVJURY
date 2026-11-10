@@ -40,7 +40,7 @@ export function verifyLivePlatformTask(task, { taskId, agentId, expectedDescript
       typeof task.description==='string' && task.description !== expectedDescription) {
     throw Error('Authenticated OpenServ task description mismatch; refusing signed review.');
   }
-  if(['cancelled','done'].includes(String(task.status||'').toLowerCase())) {
+  if(['cancelled','done','human-assistance-required'].includes(String(task.status||'').toLowerCase())) {
     throw Error('OpenServ task already terminal; refusing new signed review.');
   }
   return true;
