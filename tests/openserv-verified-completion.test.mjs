@@ -49,7 +49,7 @@ test('legacy and E2E V1 cannot complete; E2E V2 only enables completion after ex
   assert.notEqual(next.workflowName,legacy.workflowName);
   assert.notEqual(next.agentName,legacy.agentName);
   assert.throws(()=>requireActiveProfile(archive),/frozen/);
-  assert.equal(requireActiveProfile(next),next);
+  assert.throws(()=>requireActiveProfile(next),/frozen/);
   assert.equal(allowsVerifiedTaskCompletion(legacy,{SERVJURY_COMPLETE_VERIFIED_TASK:'1'}),false);
   assert.equal(allowsVerifiedTaskCompletion(archive,{SERVJURY_COMPLETE_VERIFIED_TASK:'1'}),false);
   assert.equal(allowsVerifiedTaskCompletion(next,{}),false);
