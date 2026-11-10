@@ -26,3 +26,17 @@ export const SERVJURY_TASK_INPUT = [
   'Use the verified GenLayer contract readback as the only verdict authority.',
   'Provide the on-chain verdict, reason, case ID and receipt ID as task output only after verification.',
 ].join('\n');
+
+\n// E2E V2 workflow-specific guidance. The OpenServ orchestration agent must
+// never label NOT_VERIFIED or an uncertain submitted TX as task completion.
+export const SERVJURY_TASK_BODY_V2 = SERVJURY_TASK_BODY + [
+  'CRITICAL E2E V2 SAFETY GATE: the capability output is authoritative, not the OpenServ output reviewer score.',
+  'If adjudicate_delivery returns NOT_VERIFIED, TASK_COMPLETION_UNCONFIRMED, or lacks result GENLAYER_VERDICT_VERIFIED with both real TX hashes, do not call out_complete_task or claim finished.',
+  'If the capability returns NOT_VERIFIED, report the uncertainty and original transaction hash if it was logged by the operator; do not invoke the capability again.',
+  'Only treat the task as genuinely complete after on-chain DECIDED readback, verified OpenServ receipt and the matching completed output.',
+].join('\n');
+
+export const SERVJURY_TASK_INPUT_V2 = SERVJURY_TASK_INPUT + [
+  'This is the isolated V2 acceptance run. Earlier workflows and cases MUST NOT be reused or replayed.',
+  'If the on-chain adapter returns NOT_VERIFIED, stop. The OpenServ output reviewer score is not evidence of on-chain success.',
+].join('\n');
