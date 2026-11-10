@@ -33,6 +33,7 @@ export function classifyAuthenticatedE2E({workflowId,taskId,agentId,task,detail,
   if(!output||typeof output!=='object'||Array.isArray(output)||
      output.result!=='GENLAYER_VERDICT_VERIFIED'||
      output.verdict!==state.verdict||
+     output.reason!==onchain.reason||
      typeof output.reason!=='string'||!output.reason.trim()||
      output.caseId!==base.caseId||
      output.taskId!==taskId||output.workflowId!==workflowId) {
