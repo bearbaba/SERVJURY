@@ -10,7 +10,11 @@ import { fileLiveCase, judgeLiveCase, readLiveCase } from '../src/genlayer.mjs';
 import { originalWebhookEvidence } from '../src/openserv-trusted-input.mjs';
 import { stableTaskIdentity, verifyLivePlatformTask } from '../src/openserv-stable-identity.mjs';
 import { runTaskReview } from '../src/openserv-bridge.mjs';
-import { SERVJURY_TASK_DESCRIPTION, SERVJURY_TASK_BODY } from '../src/openserv-task-instructions.mjs';
+import { SERVJURY_TASK_DESCRIPTION, SERVJURY_TASK_BODY, SERVJURY_TASK_INPUT } from '../src/openserv-task-instructions.mjs';
+import { selectOpenServProfile, allowsVerifiedTaskCompletion } from '../src/openserv-profiles.mjs';
+import { buildVerifiedTaskOutput, confirmCompletedTask } from '../src/openserv-verified-completion.mjs';
+
+const profile=selectOpenServProfile();
 
 if (process.env.ENABLE_LIVE_TRANSACTIONS !== '1') {
   throw new Error('Set ENABLE_LIVE_TRANSACTIONS=1 with an explicit GenLayer network and dedicated test signer.');
@@ -72,6 +76,12 @@ agent.addCapability({
         fileCase: fileLiveCase,
         judgeCase: judgeLiveCase,
       });
+      // E2E completion is opt-in and requires fresh, strictly verified GenLayer
+      // filing AND adjudication hashes. In particular, a read-only recovery of
+      // old task 750591 cannot satisfy this condition.
+      const verifiedOutput=allowsVerifiedTaskCompletion(profile)
+        ? buildVerifiedTaskOutput(receipt,{workflowId,taskId})
+        : null;
       // The deterministic receipt is the partner writeback. Never output a
       // verdict unless it was read from a finalized on-chain state.
       const body = JSON.stringify(receipt);
@@ -89,6 +99,28 @@ agent.addCapability({
         completedInProcess.set(taskKey, failure);
         console.error('SERVJURY task log not confirmed; inspect OpenServ before any repeat.');
         return failure;
+      }
+      if(verifiedOutput) {
+        // An authenticated SDK action completes exactly the task it just
+        // reviewed. An ACK without an explicit task readback is not completion.
+        // Network errors here are UNCERTAIN side effects; never retry.
+        try {
+          await this.completeTask({workspaceId:workflowId,taskId,output:verifiedOutput});
+          const detail=await this.getTaskDetail({workspaceId:workflowId,taskId});
+          confirmCompletedTask(detail,{workflowId,taskId,output:verifiedOutput});
+        } catch {
+          const failure=JSON.stringify({
+            status:'TASK_COMPLETION_UNCONFIRMED',
+            taskId,caseId:receipt.caseId,receiptId:receipt.receiptId,
+            reason:'Completion may have been accepted; inspect original OpenServ Task Output before any action.',
+          });
+          completedInProcess.set(taskKey,failure);
+          console.error('SERVJURY OpenServ completion not confirmed. Do NOT replay or re-sign.');
+          return failure;
+        }
+        completedInProcess.set(taskKey,verifiedOutput);
+        console.log('SERVJURY independently confirmed original OpenServ task status DONE.');
+        return verifiedOutput;
       }
       completedInProcess.set(taskKey, body);
       console.log('SERVJURY authenticated OpenServ receipt written:', body);
@@ -135,8 +167,10 @@ setLogger(safeProvisionLogger());
 // mutate existing task nodes, reset their status to 'to-do', and disrupt
 // human-assistance recovery. Only explicitly provision once when no saved
 // agent/workflow credentials exist. Reuse .openserv.json otherwise.
-const agentName = 'SERVJURY — Internet Court Review';
-const workflowName = 'SERVJURY Delivery Review';
+// The separate E2E profile provisions a NEW agent/workflow only when explicitly
+// requested. Default legacy profile reuses cached credentials and NEVER syncs.
+const agentName = profile.agentName;
+const workflowName = profile.workflowName;
 const cachedProvision = getProvisionedInfo(agentName, workflowName);
 const provisionMode = decideOpenServProvisionMode(
   cachedProvision, process.env.SERVJURY_ALLOW_INITIAL_PROVISION
@@ -170,7 +204,12 @@ try {
     // Cached existing workflow #14061 is deliberately not re-synced.
     // The platform may separately fail when restoring Human Assistance
     // message history; this body does not claim to fix that provider error.
-    task: { description: SERVJURY_TASK_DESCRIPTION, body: SERVJURY_TASK_BODY },
+    tasks: [{
+      name:'delivery-evidence-review',
+      description:SERVJURY_TASK_DESCRIPTION,
+      body:SERVJURY_TASK_BODY,
+      input:SERVJURY_TASK_INPUT,
+    }],
   },
   });
 } catch (error) {
