@@ -53,7 +53,7 @@ test('an existing case with different evidence is blocked', async () => {
 test('unverified verdict or empty reason cannot reach OpenServ task log',()=>{
   assert.throws(()=>verifiedReceipt({...decided,reason:''},{caseId:'c',taskId:'42'}),/Missing on-chain/);
   assert.throws(()=>verifiedReceipt({...decided,verdict:'PENDING'},{caseId:'c',taskId:'42'}),/No finalized/);
-  assert.throws(()=>verifyStoredCase({...stored,status:'UNKNOWN'},input),/Invalid on-chain/);
+  assert.throws(()=>verifyStoredCase({...stored,status:'UNKNOWN'},{...input,taskId:publicTaskRef(7,42)}),/Invalid on-chain/);
 });
 test('unknown-case classifier rejects generic transport failures',()=>{
   assert.equal(isUnknownCaseError(Error('Unknown case')),true);
