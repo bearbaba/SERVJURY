@@ -53,7 +53,7 @@ const marker='.servjury-e2e-trigger-attempt-'+workflowId+'.lock';
 let locked;
 try {locked=await open(marker,'wx',0o600);}
 catch {throw Error('This isolated E2E workflow has already had a trigger attempt. Inspect the OpenServ session; do not retry.');}
-try {await locked.writeFile(JSON.stringify({workflowId,agentId,intent:'ONE_E2E_TRIGGER_ATTEMPT'})+'\\n');}
+try {await locked.writeFile(JSON.stringify({workflowId,agentId,intent:'ONE_E2E_TRIGGER_ATTEMPT'})+'\n');}
 finally {await locked.close();}
 try {
   const response = await client.triggers.fireWebhook({ workflowId, input: scenario });
