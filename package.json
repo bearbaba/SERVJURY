@@ -13,8 +13,10 @@
   "dependencies": {
     "@openserv-labs/client": "latest",
     "@openserv-labs/sdk": "latest",
-    "genlayer-js": "latest",
+    "genlayer-js": "2.0.0-rc.2",
     "zod": "latest"
   },
-  "engines": { "node": ">=22" }
+  "engines": {
+    "node": ">=22"
+  }
 }
