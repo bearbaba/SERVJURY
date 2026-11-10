@@ -1,6 +1,7 @@
 // Authenticated OpenServ capability. Do not confuse its SDK task context with
 // synthetic Studio fixture task IDs. No funds, escrow or automatic payouts.
 import { Agent, run } from '@openserv-labs/sdk';
+import { writeFileSync } from 'node:fs';
 import { provision, triggers } from '@openserv-labs/client';
 import { z } from 'zod';
 import { fileLiveCase, judgeLiveCase, readLiveCase } from '../src/genlayer.mjs';
@@ -74,4 +75,19 @@ if (!provisioned?.agentId || !provisioned?.workflowId) {
   throw new Error('OpenServ provisioning did not return agent and workflow IDs.');
 }
 console.log(`SERVJURY OpenServ provisioned: agentId=${provisioned.agentId}, workflowId=${provisioned.workflowId}`);
+// Store the webhook URL locally (never in logs or Git) for safe one-shot task
+// triggering. Preserve the private per-workflow token.
+const endpoint = provisioned.apiEndpoint || (provisioned.triggerToken
+  ? `https://api.openserv.ai/webhooks/trigger/${provisioned.triggerToken}`
+  : null);
+if (endpoint) {
+  const parsed = new URL(endpoint);
+  if (parsed.protocol === 'https:' && parsed.hostname === 'api.openserv.ai'
+      && /^\/webhooks\/trigger\/[a-zA-Z0-9_-]+\/?$/.test(parsed.pathname)) {
+    writeFileSync('.openserv-trigger-url', parsed.toString(), { mode: 0o600 });
+    console.log('OpenServ webhook URL saved privately to .openserv-trigger-url (gitignored).');
+  } else {
+    console.warn('Unexpected OpenServ webhook URL format; use the trigger URL in your OpenServ dashboard.');
+  }
+}
 await run(agent);
