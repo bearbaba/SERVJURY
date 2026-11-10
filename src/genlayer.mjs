@@ -1,3 +1,4 @@
+import { classifyMissingCaseWithCalibratedProbe } from './genlayer-missing.mjs';
 // Stable GenLayer Studionet SDK v1 adapter. This contract is on Studionet
 // chain 61999 (NOT Studio-dev 61997). No signer key ever goes to the browser.
 // Never blindly retry a write once a tx hash has been received.
@@ -44,8 +45,10 @@ async function write(client, addr, TransactionStatus, functionName, args) {
       error.txHash = txHash;
       throw error;
     }
+    console.log(`SERVJURY GenLayer ${functionName}: FINALIZED / SUCCESS, tx=${txHash}`);
     return { txHash, finalized: true, execution: 'SUCCESS' };
   } catch (error) {
+    console.error(`SERVJURY GenLayer ${functionName}: transaction receipt not confirmed; inspect tx=${txHash} before any retry.`);
     error.txHash = txHash;
     throw error;
   }
@@ -61,8 +64,20 @@ export async function judgeLiveCase(caseId) {
   const state = await client.readContract({ address: addr, functionName: 'get_case', args: [caseId] });
   return { ...result, case: typeof state === 'string' ? JSON.parse(state) : state };
 }
-export async function readLiveCase(caseId) {
-  const { client, addr } = await makeClient();
+async function readCaseFromClient(client, addr, caseId) {
   const state = await client.readContract({ address: addr, functionName: 'get_case', args: [caseId] });
   return typeof state === 'string' ? JSON.parse(state) : state;
+}
+
+export async function readLiveCase(caseId) {
+  const { client, addr } = await makeClient();
+  try {
+    return await readCaseFromClient(client, addr, caseId);
+  } catch (targetError) {
+    return classifyMissingCaseWithCalibratedProbe({
+      targetError,
+      readKnownCase: (referenceId) => readCaseFromClient(client, addr, referenceId),
+      readAbsentSentinel: (sentinelId) => readCaseFromClient(client, addr, sentinelId),
+    });
+  }
 }

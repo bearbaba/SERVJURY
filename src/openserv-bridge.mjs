@@ -34,7 +34,7 @@ export function verifyStoredCase(state, expected) {
   return state;
 }
 
-export function verifiedReceipt(state, { caseId, taskId, adjudicationTxHash = null }) {
+export function verifiedReceipt(state, { caseId, taskId, filingTxHash = null, adjudicationTxHash = null }) {
   if (state.status !== 'DECIDED' || !VERDICTS.has(state.verdict)) {
     throw new Error('No finalized, valid contract verdict to report to OpenServ');
   }
@@ -45,6 +45,7 @@ export function verifiedReceipt(state, { caseId, taskId, adjudicationTxHash = nu
   return {
     receiptId: `servjury-${digest}`, caseId, taskId,
     verdict: state.verdict, reason: state.reason,
+    filingTxHash,
     adjudicationTxHash,
     source: 'GenLayer finalized on-chain state',
   };
@@ -54,6 +55,7 @@ export async function runTaskReview({ workspaceId, taskId, input, allowFirstFili
   const caseId = caseIdForTask(workspaceId, taskId);
   const expected = { taskId: String(taskId).trim(), terms: input.terms, delivery: input.delivery, evidence: input.evidence };
   let state;
+  let filingTxHash = null;
   try {
     state = await readCase(caseId);
   } catch (error) {
@@ -63,7 +65,8 @@ export async function runTaskReview({ workspaceId, taskId, input, allowFirstFili
     }
     // Never resend when a tx hash was returned but finality timed out.
     // The caller must inspect that transaction and use the same case ID.
-    await fileCase(caseId, input);
+    const filing = await fileCase(caseId, input);
+    filingTxHash = filing?.txHash || null;
     state = await readCase(caseId);
   }
   verifyStoredCase(state, expected);
@@ -74,5 +77,5 @@ export async function runTaskReview({ workspaceId, taskId, input, allowFirstFili
     state = await readCase(caseId);
     verifyStoredCase(state, expected);
   }
-  return verifiedReceipt(state, { caseId, taskId: String(taskId).trim(), adjudicationTxHash });
+  return verifiedReceipt(state, { caseId, taskId: String(taskId).trim(), filingTxHash, adjudicationTxHash });
 }

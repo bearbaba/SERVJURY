@@ -29,13 +29,13 @@ test('first filing then adjudication returns a real readback receipt', async () 
     fileCase:async()=>{filed++;current={...stored};return {txHash:'0xf'}} ,
     judgeCase:async()=>{judged++;current={...decided};return {txHash:'0xabc'}}});
   assert.equal(filed,1);assert.equal(judged,1);
-  assert.equal(result.verdict,'ACCEPT');assert.equal(result.adjudicationTxHash,'0xabc');
+  assert.equal(result.verdict,'ACCEPT');assert.equal(result.filingTxHash,'0xf');assert.equal(result.adjudicationTxHash,'0xabc');
   assert.match(result.receiptId,/^servjury-/);
 });
 test('existing case never refiles nor rejudges after DECIDED', async () => {
   const result=await runTaskReview({workspaceId:7,taskId:42,input,readCase:async()=>decided,
     fileCase:async()=>{throw Error('MUST_NOT_FILE')},judgeCase:async()=>{throw Error('MUST_NOT_JUDGE')}});
-  assert.equal(result.verdict,'ACCEPT');assert.equal(result.adjudicationTxHash,null);
+  assert.equal(result.verdict,'ACCEPT');assert.equal(result.filingTxHash,null);assert.equal(result.adjudicationTxHash,null);
 });
 test('an existing case with different evidence is blocked', async () => {
   await assert.rejects(runTaskReview({workspaceId:7,taskId:42,input,readCase:async()=>({...decided,evidence:'tampered'}),

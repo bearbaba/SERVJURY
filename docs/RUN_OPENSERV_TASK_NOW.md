@@ -56,9 +56,9 @@ If `NOT SET`, do not start the agent; add the Codespaces secret and restart. In 
 npm run agent
 ```
 
-This calls OpenServ `provision({agent:{instance:agent}, workflow:...})`, starts the tunnel with `run(agent)`, and stores the webhook trigger URL in the local **gitignored** file `.openserv-trigger-url`. Keep the terminal alive and the Codespace running.
+This calls OpenServ `provision({userApiKey, agent:{instance:agent}, workflow:...})` and starts the tunnel with `run(agent)`. The webhook token is not printed or saved to a standalone URL file. Keep the terminal alive and the Codespace running.
 
-**Do not show or post the contents of** `.env`, `.openserv.json`, or `.openserv-trigger-url`. The script only prints the nonsecret `agentId` and `workflowId`.
+**Do not show or post the contents of** `.env`, `.openserv.json`, or any webhook token. The script only prints the nonsecret `agentId` and `workflowId`.
 
 If provisioning or the tunnel fails, do not trigger the workflow yet. Resolve the authenticated OpenServ connection first.
 
@@ -70,7 +70,7 @@ In a **second** Codespaces terminal, run:
 SERVJURY_CONFIRM_TASK=RUN_ONE_TEST_TASK npm run task:openserv -- --execute
 ```
 
-The script uses the stored private webhook URL and official `client.triggers.fireWebhook()`. It submits a fictional invoice with a deliberately incorrect subtotal, **without stating the correct answer in the evidence**. Because the webhook uses `waitForCompletion: true`, the call may remain pending while OpenServ and GenLayer execute; do not submit it twice if the command times out.
+The script uses `OPENSERV_USER_API_KEY` from the environment and resolves the registered workflow from `.openserv.json` (or `OPENSERV_WORKFLOW_ID`). It calls official `client.triggers.fireWebhook({workflowId,...})` without exposing the token. It submits a fictional invoice with a deliberately incorrect subtotal, **without stating the correct answer in the evidence**. Because the webhook uses `waitForCompletion: true`, the call may remain pending while OpenServ and GenLayer execute; do not submit it twice if the command times out.
 
 The OpenServ platform must issue the real workspace/task IDs. The GenLayer contract must then file the case under the task ID and record the AI verdict. `ACCEPT`, `REWORK`, or `UNVERIFIABLE` are possible; no verdict is guaranteed by this guide.
 
@@ -85,8 +85,12 @@ If any step fails, record the last observed state and stop. Do not blindly rerun
 
 ## Alternative — trigger without a local download
 
-Once your OpenServ agent is already running and has a valid webhook URL, you can use the manual [**Run one real OpenServ demo task** GitHub Action](https://github.com/bearbaba/SERVJURY/actions/workflows/run-openserv-task.yml). Set the URL as the repository's encrypted **Actions secret** named `OPENSERV_WEBHOOK_URL`, not as a workflow input. The action requires typing `RUN_ONE_TEST_TASK`.
+Once your OpenServ agent is already running and its API key is configured, you can use the manual [**Run one real OpenServ demo task** GitHub Action](https://github.com/bearbaba/SERVJURY/actions/workflows/run-openserv-task.yml). Set the OpenServ **platform user API key** as the repository's encrypted **Actions secret** named `OPENSERV_USER_API_KEY` (Codespaces Secrets are separate). The Action takes the nonsecret workflow ID and requires typing `RUN_ONE_TEST_TASK`; never put an API key or webhook token in workflow inputs.
 
-**This remote Action only triggers an existing OpenServ workflow. It does not host, provision, or keep the agent running.** Use Codespaces or a secured private runtime for the agent.
+**This remote Action only triggers a **new** task in an existing OpenServ workflow. It does not host, provision, or keep the agent running.** Use Codespaces or a secured private runtime for the agent.
 
 See [full partner acceptance](OPENSERV_LIVE_ACCEPTANCE.md) and [on-chain evidence](ONCHAIN_EVIDENCE.md). Do not claim authenticated OpenServ completion from the earlier synthetic Studio cases.
+
+## 6. First authenticated task and GenLayer missing-case fix
+
+An actual OpenServ task was triggered on 2026-11-10 (agent 4953, workflow 14061), but Studionet `get_case` on a new case returned a generic `gen_call` execution failure. That attempt did not produce verified filing, judgment or task-log evidence. **Do not trigger another task before inspecting the existing task status.** Run `npm run task:inspect` after updating to the patched source, then see [the first task recovery notes](FIRST_AUTHENTICATED_OPENSERV_TASK.md). The patch uses two read-only on-chain controls before any first filing and forbids LLM-edited evidence.
