@@ -17,6 +17,17 @@ export function caseIdForTask(workspaceId, taskId) {
   return `sj_${digest}`;
 }
 
+// SDK action.task.id/workspace.id may be update-capability tokens rather
+// than public database IDs. Never reveal or store them verbatim on-chain.
+export function publicTaskRef(workspaceId, taskId) {
+  const workspace = requireId(workspaceId, 'workspace ID');
+  const task = requireId(taskId, 'task ID');
+  const digest = createHash('sha256')
+    .update('SERVJURY_PRIVATE_OPEN_SERV_CONTEXT_V1\\n')
+    .update(JSON.stringify([workspace, task])).digest('hex').slice(0, 32);
+  return `os_${digest}`;
+}
+
 export function isUnknownCaseError(error) {
   // Only a contract-level NOT_FOUND response allows first filing. RPC errors,
   // timeouts, invalid addresses, and malformed replies must fail closed.
@@ -53,7 +64,9 @@ export function verifiedReceipt(state, { caseId, taskId, filingTxHash = null, ad
 
 export async function runTaskReview({ workspaceId, taskId, input, allowFirstFiling = false, readCase, fileCase, judgeCase }) {
   const caseId = caseIdForTask(workspaceId, taskId);
-  const expected = { taskId: String(taskId).trim(), terms: input.terms, delivery: input.delivery, evidence: input.evidence };
+  const publicTaskId = publicTaskRef(workspaceId, taskId);
+  const expected = { taskId: publicTaskId, terms: input.terms, delivery: input.delivery, evidence: input.evidence };
+  const publicInput = { ...input, taskId: publicTaskId };
   let state;
   let filingTxHash = null;
   try {
@@ -65,7 +78,7 @@ export async function runTaskReview({ workspaceId, taskId, input, allowFirstFili
     }
     // Never resend when a tx hash was returned but finality timed out.
     // The caller must inspect that transaction and use the same case ID.
-    const filing = await fileCase(caseId, input);
+    const filing = await fileCase(caseId, publicInput);
     filingTxHash = filing?.txHash || null;
     state = await readCase(caseId);
   }
@@ -77,5 +90,5 @@ export async function runTaskReview({ workspaceId, taskId, input, allowFirstFili
     state = await readCase(caseId);
     verifyStoredCase(state, expected);
   }
-  return verifiedReceipt(state, { caseId, taskId: String(taskId).trim(), filingTxHash, adjudicationTxHash });
+  return verifiedReceipt(state, { caseId, taskId: publicTaskId, filingTxHash, adjudicationTxHash });
 }
