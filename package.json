@@ -14,7 +14,8 @@
     "task:detail": "node --env-file-if-exists=.env scripts/inspect-openserv-task-detail.mjs",
     "task:chain": "node --env-file-if-exists=.env scripts/audit-onchain-tasks.mjs",
     "tx:inspect": "node --env-file-if-exists=.env scripts/inspect-genlayer-file-tx.mjs",
-    "tx:history": "node --env-file-if-exists=.env scripts/discover-genlayer-case-txs.mjs"
+    "tx:history": "node --env-file-if-exists=.env scripts/discover-genlayer-case-txs.mjs",
+    "task:handoff": "node --env-file-if-exists=.env scripts/handoff-existing-openserv-verdict.mjs"
   },
   "dependencies": {
     "@openserv-labs/client": "2.5.3",
