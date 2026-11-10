@@ -35,12 +35,24 @@ export async function makeClient() {
 // Explicitly request complete receipts: genlayer-js v1 defaults to the
 // simplified format, which loses Studionet's leader GenVM execution result.
 export async function confirmFinalizedWrite(client, txHash, TransactionStatus) {
-  const receipt=await client.waitForTransactionReceipt({
-    hash:txHash, status:TransactionStatus.FINALIZED, fullTransaction:true,
-  });
-  if(isFinalizedSuccess(receipt)) return receipt;
-  const stored=await client.getTransaction({hash:txHash}); // read-only recovery
-  if(isFinalizedSuccess(stored)) return stored;
+  // Waiting for FINALIZED can throw because of a timeout, unavailable RPC,
+  // or a transient SDK transport error even AFTER a TX has finalized.
+  // Recover only by reading the SAME hash; never submit or re-sign a write.
+  try {
+    const receipt=await client.waitForTransactionReceipt({
+      hash:txHash, status:TransactionStatus.FINALIZED, fullTransaction:true,
+    });
+    if(isFinalizedSuccess(receipt)) return receipt;
+  } catch {
+    // A failed wait is NOT proof that the signed TX failed. The read below
+    // may observe a success that finalized before the wait stopped.
+  }
+  try {
+    const stored=await client.getTransaction({hash:txHash}); // read-only, same hash
+    if(isFinalizedSuccess(stored)) return stored;
+  } catch {
+    // Preserve the original hash on the error for safe manual inspection.
+  }
   const error=new Error('Write finalized execution not confirmed successful by complete GenVM receipt');
   error.txHash=txHash;
   throw error;
