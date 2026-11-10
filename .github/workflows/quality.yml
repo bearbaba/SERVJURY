@@ -62,6 +62,11 @@ jobs:
       - name: Inspect first authenticated GenLayer file_case TX without signing
         timeout-minutes: 2
         run: npm run tx:inspect
+      - name: Inspect second historical case TX without signing
+        timeout-minutes: 2
+        env:
+          SERVJURY_INSPECT_TX_HASH: '0xfaf3cb1fc7bc95e81c9e6950ceeee8ee640aaeb3010ab6a4c2ec6a2612c50406'
+        run: npm run tx:inspect
       - name: Find adjudicate_case TX via public contract history if supported
         timeout-minutes: 2
         run: npm run tx:history
