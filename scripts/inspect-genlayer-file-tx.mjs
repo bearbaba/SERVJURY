@@ -24,6 +24,8 @@ try {
       return [key,{type:typeof value,keys:value&&typeof value==='object' ? Object.keys(value).slice(0,35) : []}];
     })
   )));
+  const lr=tx.consensus_data?.leader_receipt;
+  console.log('GENLAYER_LEADER_RECEIPT_FIELD_NAMES',JSON.stringify(lr && typeof lr==='object' ? Object.keys(lr).slice(0,50) : []));
   if(tx.txDataDecoded && typeof tx.txDataDecoded==='object') {
     console.log('GENLAYER_DECODED_FIELD_NAMES',JSON.stringify(Object.keys(tx.txDataDecoded).slice(0,25)));
   }
