@@ -25,6 +25,16 @@ if(Number(cached?.agentId)!==agentId || Number(cached?.workflowId)!==workflowId 
 }
 const task=await platform.tasks.get({workflowId,id:taskId});
 validateRecoveryTask(task,{workflowId,taskId,agentId});
+// Public task output is NOT a server log. Nevertheless, a completed output
+// means manual review is required before any recovery attempt. Fail closed if
+// the authenticated task-detail endpoint becomes unavailable.
+const detail=await platform.get('/workspaces/'+workflowId+'/tasks/'+taskId+'/detail');
+if(Number(detail?.id)!==taskId || String(detail?.status||'')!=='human-assistance-required'){
+  throw Error('OpenServ detail differs from authenticated task status; refusing handoff.');
+}
+if(typeof detail.output==='string' && detail.output.trim()){
+  throw Error('OpenServ task already has output; inspect it instead of writing another log.');
+}
 const publicClient=createClient({
   chain:studionet,
   account:createAccount('0x'+'11'.repeat(32)),
