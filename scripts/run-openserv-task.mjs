@@ -1,7 +1,7 @@
 // Trigger exactly one REAL OpenServ webhook task using documented client API.
 // Does not create a synthetic workspace ID; OpenServ supplies task context.
 // The webhook URL contains a bearer-like token. Never print, commit or paste it.
-import { existsSync, readFileSync } from 'node:fs';
+import { open } from 'node:fs/promises';
 import { requireOpenServUserApiKey } from '../src/openserv-auth.mjs';
 import { summarizeTriggerResult } from '../src/openserv-trigger-result.mjs';
 import { selectOpenServProfile } from '../src/openserv-profiles.mjs';
@@ -47,6 +47,14 @@ if(process.env.OPENSERV_WORKFLOW_ID &&
 console.log('Isolated E2E workflow selected:',JSON.stringify({workflowId,agentId}));
 const { PlatformClient } = await import('@openserv-labs/client');
 const client = new PlatformClient({ apiKey: userApiKey });
+// At-most-once E2E trigger attempt per isolated workflow. A timeout may
+// mean OpenServ accepted the task, so marker is never automatically removed.
+const marker='.servjury-e2e-trigger-attempt-'+workflowId+'.lock';
+let locked;
+try {locked=await open(marker,'wx',0o600);}
+catch {throw Error('This isolated E2E workflow has already had a trigger attempt. Inspect the OpenServ session; do not retry.');}
+try {await locked.writeFile(JSON.stringify({workflowId,agentId,intent:'ONE_E2E_TRIGGER_ATTEMPT'})+'\\n');}
+finally {await locked.close();}
 try {
   const response = await client.triggers.fireWebhook({ workflowId, input: scenario });
   const summary = summarizeTriggerResult(response);
