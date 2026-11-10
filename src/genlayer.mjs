@@ -1,4 +1,5 @@
 import { classifyMissingCaseWithCalibratedProbe } from './genlayer-missing.mjs';
+import { provenGenVMExecutionName } from './genlayer-tx-status.mjs';
 // Stable GenLayer Studionet SDK v1 adapter. This contract is on Studionet
 // chain 61999 (NOT Studio-dev 61997). No signer key ever goes to the browser.
 // Never blindly retry a write once a tx hash has been received.
@@ -6,7 +7,7 @@ const allowed = new Set(['localnet', 'studionet', 'testnetBradbury']);
 
 export function isFinalizedSuccess(receipt) {
   const status = String(receipt?.statusName || '').toUpperCase();
-  const execution = String(receipt?.txExecutionResultName || '').toUpperCase();
+  const execution = provenGenVMExecutionName(receipt);
   return status === 'FINALIZED' && execution === 'FINISHED_WITH_RETURN';
 }
 
