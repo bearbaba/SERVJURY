@@ -85,10 +85,13 @@ This is an actual OpenServ runnable capability, not a fake REST mock. It uses `@
 
 ```bash
 npm install
-# Export the live GenLayer variables above.
-# Set ALLOW_FIRST_FILING=1 ONLY for the first confirmed task filing.
+# Configure GENLAYER_PRIVATE_KEY and a separate OPENSERV_USER_API_KEY as
+# private Codespaces Secrets (never place either one in GitHub source).
+# Set ALLOW_FIRST_FILING=1 ONLY for a reviewed new task.
 ALLOW_FIRST_FILING=1 npm run agent
 ```
+
+**OpenServ authentication note (10 Nov 2026):** Wallet-nonce login returned HTTP 404 on the live platform. SERVJURY therefore requires a separate OpenServ **platform user API key** via `OPENSERV_USER_API_KEY` and fails closed without it. This is not the agent's `OPENSERV_API_KEY`, nor the GenLayer private signing key. [Troubleshoot the 404 safely](docs/OPENSERV_AUTH_404.md).
 
 The OpenServ SDK can provision an agent and a webhook workflow using its documented tunnel. Consult official [OpenServ SDK skill](https://github.com/openserv-labs/skills/blob/main/skills/openserv-agent-sdk/SKILL.md). A real invocation should include `terms`, `delivery`, `evidence` arguments; the task identity comes from OpenServ's authenticated action. Review your wallet funding and network settings before authorizing signed transactions. The agent never moves funds, never auto-retries an unknown write, and does not fake a successful verdict.
 
