@@ -13,3 +13,16 @@ export const SERVJURY_TASK_BODY = [
   'Never request an additional on-chain transaction solely to repair missing OpenServ task output.',
   'Complete the task only with a verified on-chain readback and correctly attributed original task-log receipt.',
 ].join('\n');
+
+
+// OpenServ @openserv-labs/client provision.ts uses input: '' for its single-task
+// shorthand. Use its explicit 'tasks' array to supply both task.body AND task.input
+// for an isolated fresh E2E workflow. This is prompt hygiene, not a verified
+// diagnosis of the platform AI_InvalidPromptError during Human Assistance.
+export const SERVJURY_TASK_INPUT = [
+  'A webhook-triggered delivery review is pending.',
+  'Read the original authenticated webhook payload for immutable fields: terms, delivery and evidence.',
+  'Use adjudicate_delivery exactly once with these fields. Do not calculate a verdict from the orchestration prompt.',
+  'Use the verified GenLayer contract readback as the only verdict authority.',
+  'Provide the on-chain verdict, reason, case ID and receipt ID as task output only after verification.',
+].join('\\n');
