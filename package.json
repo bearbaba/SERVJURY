@@ -11,10 +11,10 @@
     "agent": "node agent/openserv-agent.mjs"
   },
   "dependencies": {
-    "@openserv-labs/client": "latest",
-    "@openserv-labs/sdk": "latest",
+    "@openserv-labs/client": "2.5.3",
+    "@openserv-labs/sdk": "2.4.1",
     "genlayer-js": "2.0.0-rc.2",
-    "zod": "latest",
+    "zod": "3.25.76",
     "tsx": "4.23.15"
   },
   "engines": {
