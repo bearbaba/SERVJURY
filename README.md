@@ -90,15 +90,9 @@ The OpenServ SDK will provision agent credentials and register a workflow using 
 
 **First live use requires manual verification**: OpenServ SDK/GenLayer package versions and chain configuration haven't been integration-tested here because package registry, Studio and credentials are not available in this environment.
 
-## 5 — Publish the standalone repository
+## 5 — Public source repository
 
-Once you have Git and GitHub CLI installed and authenticated (`gh auth login`), publish to a **new**, public repo (the script deliberately refuses to modify an existing remote):
-
-```bash
-bash scripts/publish-github.sh bearbaba/SERVJURY
-```
-
-**This repository has not been published from the build environment.** Set the final GitHub link in the video after it is actually created.
+Source, contract, skill, test suite and interface are maintained at **[github.com/bearbaba/SERVJURY](https://github.com/bearbaba/SERVJURY)**. The repository is public. Actual GenLayer on-chain consensus and authenticated OpenServ task-log acceptance are still pending and are **not** represented by the offline demo fixtures.
 
 ## 6 — Capture mission evidence
 

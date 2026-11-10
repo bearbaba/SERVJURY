@@ -1,0 +1,83 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <meta name="theme-color" content="#090d17"/>
+  <meta name="description" content="SERVJURY: evidence-grounded agent delivery adjudication. Internet Court × OpenServ × GenLayer."/>
+  <title>SERVJURY — When agents disagree.</title>
+  <link rel="stylesheet" href="/styles.css"/>
+  <script src="/app.js" defer></script>
+</head>
+<body>
+  <div class="ambient ambient-one"></div><div class="ambient ambient-two"></div>
+  <div class="shell">
+    <header class="topbar">
+      <div class="product-logo"><span class="product-symbol">S<span class="symbol-notch">·</span></span><span>SERVJURY<small>INTERNET COURT DEMO LAB</small></span></div>
+      <div class="top-status"><span class="pulse"></span><span id="modeTag">LOCAL FIXTURE · NO TRANSACTIONS</span></div>
+    </header>
+    <main>
+      <section class="hero">
+        <div class="eyebrow"><span class="rule"></span> AGENTIC COMMERCE NEEDS ACCOUNTABILITY</div>
+        <h1>When agents <span>disagree.</span><br/>Let the evidence decide.</h1>
+        <p class="hero-description">A delivery dispute starts in OpenServ, gets a neutral GenLayer jury, and returns a decision to the task. No invented certainty. No silent retries.</p>
+        <div class="partner-strip" aria-label="Integration brands">
+          <div class="partner"><span class="court-mark">◈</span><span>Internet Court</span></div>
+          <div class="partner-separator">+</div>
+          <div class="partner"><img src="https://genlayer.com/brand/genlayer-logo-white-cropped.svg" alt="GenLayer official logo" class="genlayer-logo"/><span class="logo-fallback">GenLayer</span></div>
+          <div class="partner-separator">+</div>
+          <div class="partner"><span class="openserv-mark">◌</span><span>OpenServ</span></div>
+        </div>
+      </section>
+      <div class="workspace">
+        <section class="panel input-panel" aria-label="Delivery case">
+          <div class="panel-head"><span class="panel-label">01 / DELIVERY RECORD</span><span class="mini-status">PARTNER · OPENSERV</span></div>
+          <h2>Choose a case</h2>
+          <p class="subtext">Three reproducible evidence scenarios. Custom text requires live GenLayer judgment.</p>
+          <div class="choices" role="group" aria-label="Demo scenarios">
+            <button type="button" class="choice selected" data-scenario="rework"><span class="choice-icon coral">×</span><span><strong>Missing evidence</strong><small>Material violation</small></span></button>
+            <button type="button" class="choice" data-scenario="success"><span class="choice-icon lime">✓</span><span><strong>Delivery accepted</strong><small>All required proof</small></span></button>
+            <button type="button" class="choice" data-scenario="unknown"><span class="choice-icon lavender">?</span><span><strong>Contested proof</strong><small>Cannot verify</small></span></button>
+          </div>
+          <div class="metadata"><span>OpenServ task</span><strong id="taskId">OS-DEMO-1043</strong></div>
+          <label for="terms">AGREED ACCEPTANCE TERMS</label>
+          <textarea id="terms" rows="3" spellcheck="false"></textarea>
+          <label for="delivery">AGENT DELIVERABLE</label>
+          <textarea id="delivery" rows="3" spellcheck="false"></textarea>
+          <label for="evidence">SUPPORTING EVIDENCE</label>
+          <textarea id="evidence" rows="3" spellcheck="false"></textarea>
+          <button id="fileBtn" class="primary-button">File dispute <span>↗</span></button>
+        </section>
+        <section class="panel court-panel" aria-label="Court progress">
+          <div class="panel-head"><span class="panel-label">02 / ADJUDICATION</span><span class="mini-status jury">GENLAYER AI JURY</span></div>
+          <div class="court-graphic"><div class="circle circle-outer"></div><div class="circle circle-inner"></div><div class="court-glyph">◈</div><span class="orbit orbit-a"></span><span class="orbit orbit-b"></span></div>
+          <h2>Independent judgment.<br/>Recorded on-chain.</h2>
+          <p class="subtext center">The contract compares terms, delivery and evidence. Validators independently check the proposed verdict.</p>
+          <div class="step-list">
+            <div class="step"><span class="step-num" id="stage1">1</span><div><strong>Evidence filed</strong><small id="fileState">Waiting for a dispute</small></div><span class="step-tail" id="done1">—</span></div>
+            <div class="step"><span class="step-num" id="stage2">2</span><div><strong>GenLayer review</strong><small id="judgeState">Waiting for filing</small></div><span class="step-tail" id="done2">—</span></div>
+            <div class="step"><span class="step-num" id="stage3">3</span><div><strong>Outcome linked</strong><small id="syncState">Waiting for verdict</small></div><span class="step-tail" id="done3">—</span></div>
+          </div>
+          <button id="judgeBtn" class="outline-button" disabled>Request jury decision <span>→</span></button>
+          <div class="mode-note" id="modeNote">SIMULATION / Fixture outcomes are pre-defined, not AI consensus. No money moves.</div>
+        </section>
+        <section class="panel verdict-panel" aria-label="Case result">
+          <div class="panel-head"><span class="panel-label">03 / FINAL VERDICT</span><span class="mini-status">PUBLIC AUDIT TRAIL</span></div>
+          <div class="result-wrap" id="resultWrap">
+            <div class="result-placeholder"><div class="empty-icon">◌</div><span>NO VERDICT YET</span><p>File the dispute, then request an independent decision.</p></div>
+          </div>
+          <div class="receipt">
+            <div><span>CASE ID</span><code id="caseId">—</code></div>
+            <div><span>EVIDENCE SOURCE</span><strong id="source">—</strong></div>
+            <div><span>TRANSACTION</span><code id="txHash">—</code></div>
+          </div>
+          <button id="resetBtn" class="text-button">↻ &nbsp; Run another case</button>
+        </section>
+      </div>
+      <div class="bottom-line"><span>DESIGNED FOR REPRODUCIBLE PARTNER DEMOS</span><span>NO ESCROW / NO AUTOMATIC PAYMENT OR REFUND</span></div>
+    </main>
+    <footer>© 2026 SERVJURY <span>Independent delivery adjudication, not legal advice.</span></footer>
+  </div>
+  <div class="toast" role="status" aria-live="polite" id="toast"></div>
+</body>
+</html>
