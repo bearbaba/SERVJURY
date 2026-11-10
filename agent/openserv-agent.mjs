@@ -1,8 +1,9 @@
 // Authenticated OpenServ capability. Do not confuse its SDK task context with
 // synthetic Studio fixture task IDs. No funds, escrow or automatic payouts.
 import { Agent, run } from '@openserv-labs/sdk';
-import { PlatformClient, provision, triggers, setLogger } from '@openserv-labs/client';
+import { PlatformClient, provision, triggers, setLogger, getProvisionedInfo } from '@openserv-labs/client';
 import { safeProvisionLogger } from '../src/openserv-safe-logging.mjs';
+import { decideOpenServProvisionMode } from '../src/openserv-provision-state.mjs';
 import { requireOpenServUserApiKey, explainPlatformAuthError } from '../src/openserv-auth.mjs';
 import { z } from 'zod';
 import { fileLiveCase, judgeLiveCase, readLiveCase } from '../src/genlayer.mjs';
@@ -129,17 +130,32 @@ try {
 // them before any future registration or re-provisioning log reaches a terminal.
 setLogger(safeProvisionLogger());
 
+// OpenServ provision() calls workflow.sync() on every restart; this can
+// mutate existing task nodes, reset their status to 'to-do', and disrupt
+// human-assistance recovery. Only explicitly provision once when no saved
+// agent/workflow credentials exist. Reuse .openserv.json otherwise.
+const agentName = 'SERVJURY — Internet Court Review';
+const workflowName = 'SERVJURY Delivery Review';
+const cachedProvision = getProvisionedInfo(agentName, workflowName);
+const provisionMode = decideOpenServProvisionMode(
+  cachedProvision, process.env.SERVJURY_ALLOW_INITIAL_PROVISION
+);
 let provisioned;
+if (provisionMode === 'reuse') {
+  agent.setCredentials({apiKey:cachedProvision.apiKey, authToken:cachedProvision.authToken});
+  provisioned = cachedProvision;
+  console.log('SERVJURY OpenServ cached credentials reused; existing workflow was NOT re-synced.');
+} else {
 try {
   provisioned = await provision({
   userApiKey,
   agent: {
     instance: agent,
-    name: 'SERVJURY — Internet Court Review',
+    name: agentName,
     description: 'OpenServ delivery disputes are adjudicated on GenLayer by AI validators with auditable task readback.',
   },
   workflow: {
-    name: 'SERVJURY Delivery Review',
+    name: workflowName,
     goal: 'Adjudicate submitted agent work under fixed task acceptance criteria using GenLayer consensus.',
     trigger: triggers.webhook({
       waitForCompletion: true, timeout: 900,
@@ -155,6 +171,7 @@ try {
 } catch (error) {
   console.error('OpenServ agent/workflow registration failed:', explainPlatformAuthError(error));
   process.exit(1);
+}
 }
 // Agent instance binding attaches the provisioned API key and auth token.
 // run(agent) is the documented OpenServ tunnel API for this SDK version.
