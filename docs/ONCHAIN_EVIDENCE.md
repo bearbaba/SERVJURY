@@ -35,3 +35,21 @@ This ledger records GenLayer Studio transaction details supplied by the operator
 5. Capture chain ID, transaction links, exact source revision, official three logos and edited video under 45 seconds.
 
 Avoid converting expected outcomes into observed results.
+
+## Case B — Filed, awaiting AI adjudication
+
+| Field | Operator-supplied observation |
+| --- | --- |
+| Case ID | `SJ-INV-20261110-B` |
+| Contract | `0x7040Db57D130C9c121Ad7152143b5076abB3c2B5` |
+| Claimant | `0x4C7cb73aC8F8999af21cfc9fF4cF2333a9508Dcb` |
+| Method | `file_case` |
+| Transaction | [`0x29a963db2f5c0f2cfce30d878054f51a85c912bf99f5bfcd85765f47ae062450`](https://explorer-studio.genlayer.com/tx/0x29a963db2f5c0f2cfce30d878054f51a85c912bf99f5bfcd85765f47ae062450) |
+| Created at | Nov 10, 2026 2:51:25 PM (explorer display time) |
+| Finality / GenVM | FINALIZED / SUCCESS |
+| Transaction consensus | Accepted; 5 initial validators |
+| Fixture details | Source total USD 100; delivered total USD 130; wrong subtotal for INV-B |
+| Adjudication | Not yet executed in evidence supplied |
+| Expected (not observed) verdict | `REWORK` |
+
+This filing does **not** prove the jury verdict or OpenServ integration. Next: `adjudicate_case("SJ-INV-20261110-B")`, followed by `get_case` persisted state readback.
