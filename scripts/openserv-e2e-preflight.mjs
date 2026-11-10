@@ -5,6 +5,7 @@ import {selectOpenServProfile} from '../src/openserv-profiles.mjs';
 import {requireOpenServUserApiKey} from '../src/openserv-auth.mjs';
 const profile=selectOpenServProfile();
 if(profile.id!=='e2e')throw Error('Preflight requires SERVJURY_AGENT_PROFILE=e2e; existing workflow 14061 must remain frozen.');
+if(process.env.SERVJURY_COMPLETE_VERIFIED_TASK!=='1')throw Error('E2E completion mode is not explicitly enabled in preflight; do not trigger an incomplete demo.');
 const cached=getProvisionedInfo(profile.agentName,profile.workflowName);
 const workflowId=Number(cached?.workflowId),agentId=Number(cached?.agentId);
 if(!Number.isSafeInteger(workflowId)||workflowId<=0||
