@@ -25,4 +25,4 @@ export const SERVJURY_TASK_INPUT = [
   'Use adjudicate_delivery exactly once with these fields. Do not calculate a verdict from the orchestration prompt.',
   'Use the verified GenLayer contract readback as the only verdict authority.',
   'Provide the on-chain verdict, reason, case ID and receipt ID as task output only after verification.',
-].join('\\n');
+].join('\n');
