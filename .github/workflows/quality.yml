@@ -49,19 +49,9 @@ jobs:
       - name: Show installed SDK versions
         run: npm ls @openserv-labs/sdk @openserv-labs/client genlayer-js zod --depth=0
       - name: Read existing finalized SERVJURY case from Studionet (read-only)
-        continue-on-error: true
         timeout-minutes: 2
         run: node scripts/studionet-preflight.mjs
-      - name: Compare stable GenLayer SDK read against hosted Studionet
-        timeout-minutes: 3
-        continue-on-error: true
-        shell: bash
-        run: |
-          mkdir -p /tmp/servjury-stable-probe
-          cp scripts/studionet-preflight.mjs /tmp/servjury-stable-probe/probe.mjs
-          npm install --prefix /tmp/servjury-stable-probe --no-audit --no-fund genlayer-js@1.1.8
-          node /tmp/servjury-stable-probe/probe.mjs
       - name: Verify actual package exports without credentials
         run: |
           node --input-type=module -e "import { Agent, run } from '@openserv-labs/sdk'; import { provision, triggers } from '@openserv-labs/client'; if (![Agent,run,provision,triggers.webhook].every(x => typeof x === 'function')) process.exit(1)"
-          node --input-type=module -e "import { createClient, createAccount } from 'genlayer-js'; import { studionet } from 'genlayer-js/chains'; const client = createClient({chain:studionet,account:createAccount('0x'+'11'.repeat(32))}); for (const name of ['readContract','writeContract','waitForFinalization','estimateTransactionFeesForWrite']) if (typeof client[name] !== 'function') throw Error('Missing SDK method: '+name)"
+          node --input-type=module -e "import { createClient, createAccount } from 'genlayer-js'; import { studionet } from 'genlayer-js/chains'; import { TransactionStatus } from 'genlayer-js/types'; const client = createClient({chain:studionet,account:createAccount('0x'+'11'.repeat(32))}); for (const name of ['readContract','writeContract','waitForTransactionReceipt']) if (typeof client[name] !== 'function') throw Error('Missing stable SDK method: '+name); if (!TransactionStatus.FINALIZED) throw Error('Missing FINALIZED enum')"
