@@ -32,30 +32,27 @@ export async function makeClient() {
   return { client, addr, TransactionStatus: types.TransactionStatus };
 }
 
+// Explicitly request complete receipts: genlayer-js v1 defaults to the
+// simplified format, which loses Studionet's leader GenVM execution result.
+export async function confirmFinalizedWrite(client, txHash, TransactionStatus) {
+  const receipt=await client.waitForTransactionReceipt({
+    hash:txHash, status:TransactionStatus.FINALIZED, fullTransaction:true,
+  });
+  if(isFinalizedSuccess(receipt)) return receipt;
+  const stored=await client.getTransaction({hash:txHash}); // read-only recovery
+  if(isFinalizedSuccess(stored)) return stored;
+  const error=new Error('Write finalized execution not confirmed successful by complete GenVM receipt');
+  error.txHash=txHash;
+  throw error;
+}
+
 async function write(client, addr, TransactionStatus, functionName, args) {
   const call = { address: addr, functionName, args, value: 0n };
   // Hosted stable Studionet currently uses the SDK v1 write lifecycle. Do not
   // pass the newer v2 fee estimate/simulation fields intended for Studio-dev.
   const txHash = await client.writeContract(call);
   try {
-    // SDK 1.1.8 defaults fullTransaction=false. Its simplified receipt
-    // strips consensus_data.leader_receipt, which is the only available
-    // GenVM execution result on hosted Studionet (61999).
-    const receipt = await client.waitForTransactionReceipt({
-      hash: txHash, status: TransactionStatus.FINALIZED, fullTransaction: true,
-    });
-    let verified = isFinalizedSuccess(receipt);
-    if (!verified) {
-      // Read-only fallback; NEVER submit a second transaction to obtain
-      // missing execution data from an incomplete SDK receipt.
-      const stored = await client.getTransaction({ hash: txHash });
-      verified = isFinalizedSuccess(stored);
-    }
-    if (!verified) {
-      const error = new Error('Write finalized execution not confirmed successful by complete GenVM receipt');
-      error.txHash = txHash;
-      throw error;
-    }
+    await confirmFinalizedWrite(client, txHash, TransactionStatus);
     console.log(`SERVJURY GenLayer ${functionName}: FINALIZED / SUCCESS, tx=${txHash}`);
     return { txHash, finalized: true, execution: 'SUCCESS' };
   } catch (error) {
