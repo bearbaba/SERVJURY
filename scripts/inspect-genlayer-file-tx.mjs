@@ -33,6 +33,17 @@ try {
     length:typeof value==='string' ? value.length : null,
   }))));
 
+  if(Array.isArray(lr))console.log('GENLAYER_SAFE_LEADER_EXECUTION_FIELDS',JSON.stringify(lr.slice(0,3).map(entry=>Object.fromEntries(
+    ['vote','result','genvm_result','execution_result'].map(field=>{
+      const v=entry?.[field];
+      return [field,{
+        type:typeof v,
+        code:typeof v==='number' && Number.isInteger(v) && v>=0 && v<=10 ? v : null,
+        enum:typeof v==='string' && /^[A-Za-z_]{1,40}$/.test(v) ? v : null,
+        fields:v && typeof v==='object' ? Object.keys(v).slice(0,25) : []
+      }];
+    })
+  ))));
   if(tx.txDataDecoded && typeof tx.txDataDecoded==='object') {
     console.log('GENLAYER_DECODED_FIELD_NAMES',JSON.stringify(Object.keys(tx.txDataDecoded).slice(0,25)));
   }
