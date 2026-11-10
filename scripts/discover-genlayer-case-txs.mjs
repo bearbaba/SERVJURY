@@ -33,14 +33,18 @@ for(const summary of selected){
   const source=typeof calldata==='string'?calldata:
     calldata && typeof calldata==='object'?JSON.stringify(calldata):'';
   const caseMatch=source.includes(caseId);
+  // Studio calldata may be SDK v1's plain text representation instead of
+  // an object with function_name. Method hints are never used as proof on
+  // their own; the exact case ID must also match.
   const method=typeof calldata==='object' && calldata
     ? String(calldata.function_name||calldata.functionName||calldata.method||'')
-    : '';
+    : source.includes('adjudicate_case') ? 'adjudicate_case'
+    : source.includes('file_case') ? 'file_case' : '';
   if(!caseMatch && method!=='adjudicate_case')continue;
   matches++;
   console.log('GENLAYER_CASE_TRANSACTION',JSON.stringify({
     hash,caseMatched:caseMatch,
-    method:/^[A-Za-z_]{1,60}$/.test(method)?method:null,
+    methodHint:caseMatch && /^[A-Za-z_]{1,60}$/.test(method)?method:null,
     status:String(tx?.statusName||'UNKNOWN'),
     execution:provenGenVMExecutionName(tx)||'UNCONFIRMED',
   }));
