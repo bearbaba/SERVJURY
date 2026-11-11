@@ -10,7 +10,7 @@ import { fileLiveCase, judgeLiveCase, readLiveCase } from '../src/genlayer.mjs';
 import { originalWebhookEvidence } from '../src/openserv-trusted-input.mjs';
 import { stableTaskIdentity, verifyLivePlatformTask } from '../src/openserv-stable-identity.mjs';
 import { runTaskReview } from '../src/openserv-bridge.mjs';
-import { SERVJURY_TASK_DESCRIPTION, SERVJURY_TASK_BODY, SERVJURY_TASK_INPUT, SERVJURY_TASK_BODY_V2, SERVJURY_TASK_INPUT_V2 } from '../src/openserv-task-instructions.mjs';
+import { SERVJURY_TASK_DESCRIPTION, SERVJURY_TASK_BODY, SERVJURY_TASK_INPUT, SERVJURY_TASK_BODY_V2, SERVJURY_TASK_INPUT_V2, SERVJURY_TASK_BODY_V3, SERVJURY_TASK_INPUT_V3 } from '../src/openserv-task-instructions.mjs';
 import { selectOpenServProfile, requireActiveProfile, allowsVerifiedTaskCompletion } from '../src/openserv-profiles.mjs';
 import { buildVerifiedTaskOutput, confirmCompletedTask } from '../src/openserv-verified-completion.mjs';
 
@@ -207,8 +207,8 @@ try {
     tasks: [{
       name:'delivery-evidence-review',
       description:SERVJURY_TASK_DESCRIPTION,
-      body:profile.id==='e2e-v2'?SERVJURY_TASK_BODY_V2:SERVJURY_TASK_BODY,
-      input:profile.id==='e2e-v2'?SERVJURY_TASK_INPUT_V2:SERVJURY_TASK_INPUT,
+      body:profile.id==='e2e-v3'?SERVJURY_TASK_BODY_V3:profile.id==='e2e-v2'?SERVJURY_TASK_BODY_V2:SERVJURY_TASK_BODY,
+      input:profile.id==='e2e-v3'?SERVJURY_TASK_INPUT_V3:profile.id==='e2e-v2'?SERVJURY_TASK_INPUT_V2:SERVJURY_TASK_INPUT,
     }],
   },
   });
@@ -232,4 +232,31 @@ console.log(`SERVJURY OpenServ provisioned: agentId=${provisioned.agentId}, work
 // which is not the token URL expected by the older launcher. The launcher
 // instead uses the workspaceId stored in the gitignored .openserv.json.
 console.log('OpenServ provisioning completed; trigger token intentionally hidden.');
+if(profile.id==='e2e-v3') {
+  if(['1','true'].includes(String(process.env.DISABLE_TUNNEL||'').toLowerCase())) {
+    throw Error('V3 requires SDK tunnel mode in Codespaces; DISABLE_TUNNEL must not be enabled.');
+  }
+  if([14061,14062,14063].includes(activeWorkflowId) ||
+     [4953,4954,4955].includes(activeAgentId)) {
+    throw Error('V3 resolved to a historical agent/workflow identity. Refusing Agent start.');
+  }
+}
 await run(agent);
+if(profile.id==='e2e-v3') {
+  // SDK run() starts the local server and initiates its tunnel. This marker
+  // enables local process+health checks, not proof of remote proxy reachability.
+  const {writeFile}=await import('node:fs/promises');
+  const {V3_READY_FILE}=await import('../src/openserv-agent-readiness.mjs');
+  const port=Number(agent.port);
+  if(!Number.isSafeInteger(port)||port<1||port>65535) {
+    throw Error('SDK did not expose a known local agent port. Do not trigger V3.');
+  }
+  const ready={profile:'e2e-v3',workflowId:activeWorkflowId,agentId:activeAgentId,
+    pid:process.pid,port,transport:'sdk-tunnel',startedAt:new Date().toISOString()};
+  await writeFile(V3_READY_FILE,JSON.stringify(ready)+'\n',{mode:0o600});
+  console.log('SERVJURY_V3_LOCAL_READY',JSON.stringify({
+    workflowId:activeWorkflowId,agentId:activeAgentId,localPort:port,
+    note:'Local readiness is not proof of a connected remote tunnel',
+  }));
+  console.log('Keep Terminal A running. Confirm the SDK reports Tunnel connected before any V3 trigger.');
+}

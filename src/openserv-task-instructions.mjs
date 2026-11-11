@@ -41,3 +41,8 @@ export const SERVJURY_TASK_INPUT_V2 = SERVJURY_TASK_INPUT + '\n' + [
   'This is the isolated V2 acceptance run. Earlier workflows and cases MUST NOT be reused or replayed.',
   'If the on-chain adapter returns NOT_VERIFIED, stop. The OpenServ output reviewer score is not evidence of on-chain success.',
 ].join('\n');
+
+
+// V3 reuses the proven safety constraints but must not label itself as V2.
+export const SERVJURY_TASK_BODY_V3 = SERVJURY_TASK_BODY_V2.replace('CRITICAL E2E V2','CRITICAL E2E V3');
+export const SERVJURY_TASK_INPUT_V3 = SERVJURY_TASK_INPUT_V2.replace('isolated V2 acceptance run','isolated V3 acceptance run');
