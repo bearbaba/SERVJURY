@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {SERVJURY_TASK_DESCRIPTION,SERVJURY_TASK_BODY,SERVJURY_TASK_INPUT,SERVJURY_TASK_BODY_V2,SERVJURY_TASK_INPUT_V2} from '../src/openserv-task-instructions.mjs';
+import {SERVJURY_TASK_DESCRIPTION,SERVJURY_TASK_BODY,SERVJURY_TASK_INPUT,SERVJURY_TASK_BODY_V2,SERVJURY_TASK_INPUT_V2,SERVJURY_TASK_BODY_V3,SERVJURY_TASK_INPUT_V3} from '../src/openserv-task-instructions.mjs';
 
 test('new workflow has nonempty description and body for OpenServ task prompt',()=>{
   assert.ok(SERVJURY_TASK_DESCRIPTION.trim().length>=30);
@@ -34,4 +34,13 @@ test('isolated V2 initial task prompt explicitly forbids OpenServ false success 
     assert.doesNotMatch(text,/750591|750592|14061|14062/);
     assert.ok(text.includes('\n'));
   }
+});
+
+test('isolated V3 task prompt has fresh label and retains NOT_VERIFIED guard',()=>{
+  assert.match(SERVJURY_TASK_BODY_V3,/CRITICAL E2E V3 SAFETY GATE/);
+  assert.doesNotMatch(SERVJURY_TASK_BODY_V3,/CRITICAL E2E V2/);
+  assert.match(SERVJURY_TASK_BODY_V3,/NOT_VERIFIED/);
+  assert.match(SERVJURY_TASK_BODY_V3,/GENLAYER_VERDICT_VERIFIED/);
+  assert.match(SERVJURY_TASK_INPUT_V3,/isolated V3 acceptance run/);
+  assert.doesNotMatch(SERVJURY_TASK_INPUT_V3,/isolated V2 acceptance run/);
 });
