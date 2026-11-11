@@ -10,7 +10,7 @@ import { fileLiveCase, judgeLiveCase, readLiveCase } from '../src/genlayer.mjs';
 import { originalWebhookEvidence } from '../src/openserv-trusted-input.mjs';
 import { stableTaskIdentity, verifyLivePlatformTask } from '../src/openserv-stable-identity.mjs';
 import { runTaskReview } from '../src/openserv-bridge.mjs';
-import { SERVJURY_TASK_DESCRIPTION, SERVJURY_TASK_BODY, SERVJURY_TASK_INPUT, SERVJURY_TASK_BODY_V2, SERVJURY_TASK_INPUT_V2 } from '../src/openserv-task-instructions.mjs';
+import { SERVJURY_TASK_DESCRIPTION, SERVJURY_TASK_BODY, SERVJURY_TASK_INPUT, SERVJURY_TASK_BODY_V2, SERVJURY_TASK_INPUT_V2, SERVJURY_TASK_BODY_V3, SERVJURY_TASK_INPUT_V3 } from '../src/openserv-task-instructions.mjs';
 import { selectOpenServProfile, requireActiveProfile, allowsVerifiedTaskCompletion } from '../src/openserv-profiles.mjs';
 import { buildVerifiedTaskOutput, confirmCompletedTask } from '../src/openserv-verified-completion.mjs';
 
@@ -207,8 +207,8 @@ try {
     tasks: [{
       name:'delivery-evidence-review',
       description:SERVJURY_TASK_DESCRIPTION,
-      body:['e2e-v2','e2e-v3'].includes(profile.id)?SERVJURY_TASK_BODY_V2:SERVJURY_TASK_BODY,
-      input:['e2e-v2','e2e-v3'].includes(profile.id)?SERVJURY_TASK_INPUT_V2:SERVJURY_TASK_INPUT,
+      body:profile.id==='e2e-v3'?SERVJURY_TASK_BODY_V3:profile.id==='e2e-v2'?SERVJURY_TASK_BODY_V2:SERVJURY_TASK_BODY,
+      input:profile.id==='e2e-v3'?SERVJURY_TASK_INPUT_V3:profile.id==='e2e-v2'?SERVJURY_TASK_INPUT_V2:SERVJURY_TASK_INPUT,
     }],
   },
   });
