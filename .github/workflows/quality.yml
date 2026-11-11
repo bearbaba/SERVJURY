@@ -23,6 +23,8 @@ jobs:
       - name: Check source syntax
         run: |
           node --check agent/openserv-agent.mjs
+          node --check src/openserv-agent-readiness.mjs
+          node --check src/openserv-profiles.mjs
           node --check scripts/openserv-e2e-preflight.mjs
           node --check scripts/audit-openserv-e2e-readonly.mjs
           node --check src/openserv-e2e-audit.mjs
