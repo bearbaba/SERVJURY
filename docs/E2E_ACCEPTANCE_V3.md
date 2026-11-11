@@ -1,3 +1,7 @@
+# ARCHIVED: V3 WAS TRIGGERED ON 11 NOV 2026 — DO NOT RE-RUN
+
+V3 workflow 14064 / Agent 4956 / Task 750594 reached Human Assistance Required after `adjudicate_delivery` returned `NOT_VERIFIED`. No GenLayer case or TX was verified in the inspected reads. The Agent tunnel did connect, but the underlying failure stage was not logged. This run is frozen. The commands below document its historical procedure only and **must not be executed again**. The V3 profile is now nonlaunchable. The new diagnostic stage labels apply only to future independently authorized execution, not retrospectively to V3.
+
 # SERVJURY — isolated E2E V3 acceptance (prepared; NOT executed)
 
 **Purpose:** Verify one fresh OpenServ task → two strictly verified GenLayer Studionet TXs → `get_case=DECIDED` → original OpenServ task log receipt → matching task output and Done session.

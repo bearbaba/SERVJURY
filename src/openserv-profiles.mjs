@@ -1,5 +1,5 @@
-// Strictly isolated OpenServ identities: E2E V1 and V2 are frozen historical runs.
-// V3 is a fresh identity; never sync, restart or trigger historical runs.
+// Strictly isolated OpenServ identities: E2E V1, V2 and V3 are frozen historical runs.
+// V3 Task 750594 returned NOT_VERIFIED and is now frozen too; do not re-trigger.
 export const LEGACY_OPEN_SERV=Object.freeze({
   id:'legacy',agentName:'SERVJURY — Internet Court Review',
   workflowName:'SERVJURY Delivery Review',launchable:true,
@@ -14,7 +14,7 @@ export const E2E_V2_OPEN_SERV=Object.freeze({
 });
 export const E2E_V3_OPEN_SERV=Object.freeze({
   id:'e2e-v3',agentName:'SERVJURY — E2E Acceptance V3',
-  workflowName:'SERVJURY E2E Acceptance V3',launchable:true,
+  workflowName:'SERVJURY E2E Acceptance V3',launchable:false,
 });
 export function selectOpenServProfile(env=process.env) {
   const kind=env.SERVJURY_AGENT_PROFILE||'legacy';
@@ -30,7 +30,8 @@ export function selectOpenServProfile(env=process.env) {
 }
 export function requireActiveProfile(profile){
   if(!profile?.launchable) {
-    const id=profile?.id==='e2e-v2'?'E2E V2 (workflow 14063, task 750593)':'E2E V1 (workflow 14062, task 750592)';
+    const id=profile?.id==='e2e-v3'?'E2E V3 (workflow 14064, task 750594)'
+      :profile?.id==='e2e-v2'?'E2E V2 (workflow 14063, task 750593)':'E2E V1 (workflow 14062, task 750592)';
     throw Error('SERVJURY '+id+' is frozen after an incomplete on-chain adjudication. Do not restart, provision or trigger either historical workflow.');
   }
   return profile;

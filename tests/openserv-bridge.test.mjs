@@ -63,3 +63,27 @@ test('unknown-case classifier rejects generic transport failures',()=>{
 test('receipt hash deterministic and derived only from validated chain result',()=>{
   assert.deepEqual(verifiedReceipt(decided,{caseId:'case',taskId:'42'}),verifiedReceipt(decided,{caseId:'case',taskId:'42'}));
 });
+
+test('review stage diagnostics identify failed phase without disclosing input or causing writes',async()=>{
+  const stages=[];let writes=0;
+  await assert.rejects(runTaskReview({workspaceId:7,taskId:42,input,allowFirstFiling:true,
+    onStage:stage=>stages.push(stage),
+    readCase:async()=>{throw Error('RPC unavailable secret-token-123');},
+    fileCase:async()=>{writes++;},judgeCase:async()=>{writes++;},
+  }),/RPC unavailable/);
+  assert.deepEqual(stages,['genlayer-initial-read']);
+  assert.equal(writes,0);
+  assert.ok(stages.every(stage=>!stage.includes('secret-token')));
+});
+
+test('review stage diagnostics distinguish filing from adjudication without retries',async()=>{
+  const stages=[];let current=null;let filed=0;let judged=0;
+  await assert.rejects(runTaskReview({workspaceId:7,taskId:42,input,allowFirstFiling:true,
+    onStage:stage=>stages.push(stage),
+    readCase:async()=>{if(!current)throw Error('Unknown case');return current;},
+    fileCase:async()=>{filed++;current={...stored};return {txHash:'0x'+'a'.repeat(64)};},
+    judgeCase:async()=>{judged++;throw Error('adjudication unavailable');},
+  }),/adjudication unavailable/);
+  assert.equal(filed,1);assert.equal(judged,1);
+  assert.equal(stages.at(-1),'genlayer-adjudicate-case');
+});

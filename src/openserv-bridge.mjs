@@ -62,13 +62,14 @@ export function verifiedReceipt(state, { caseId, taskId, filingTxHash = null, ad
   };
 }
 
-export async function runTaskReview({ workspaceId, taskId, input, allowFirstFiling = false, readCase, fileCase, judgeCase }) {
+export async function runTaskReview({ workspaceId, taskId, input, allowFirstFiling = false, readCase, fileCase, judgeCase, onStage = () => {} }) {
   const caseId = caseIdForTask(workspaceId, taskId);
   const publicTaskId = publicTaskRef(workspaceId, taskId);
   const expected = { taskId: publicTaskId, terms: input.terms, delivery: input.delivery, evidence: input.evidence };
   const publicInput = { ...input, taskId: publicTaskId };
   let state;
   let filingTxHash = null;
+  onStage('genlayer-initial-read');
   try {
     state = await readCase(caseId);
   } catch (error) {
@@ -78,17 +79,24 @@ export async function runTaskReview({ workspaceId, taskId, input, allowFirstFili
     }
     // Never resend when a tx hash was returned but finality timed out.
     // The caller must inspect that transaction and use the same case ID.
+    onStage('genlayer-file-case');
     const filing = await fileCase(caseId, publicInput);
     filingTxHash = filing?.txHash || null;
+    onStage('genlayer-file-readback');
     state = await readCase(caseId);
   }
+  onStage('genlayer-case-validation');
   verifyStoredCase(state, expected);
   let adjudicationTxHash = null;
   if (state.status === 'FILED') {
+    onStage('genlayer-adjudicate-case');
     const result = await judgeCase(caseId);
     adjudicationTxHash = result.txHash || null;
+    onStage('genlayer-adjudication-readback');
     state = await readCase(caseId);
+    onStage('genlayer-adjudication-validation');
     verifyStoredCase(state, expected);
   }
+  onStage('genlayer-verdict-verification');
   return verifiedReceipt(state, { caseId, taskId: publicTaskId, filingTxHash, adjudicationTxHash });
 }
