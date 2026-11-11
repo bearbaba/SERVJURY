@@ -5,6 +5,7 @@ import { open } from 'node:fs/promises';
 import { requireOpenServUserApiKey } from '../src/openserv-auth.mjs';
 import { summarizeTriggerResult } from '../src/openserv-trigger-result.mjs';
 import { selectOpenServProfile,requireActiveProfile } from '../src/openserv-profiles.mjs';
+import { assertV3AgentLocallyReady } from '../src/openserv-agent-readiness.mjs';
 
 const isExecute = process.argv.includes('--execute');
 const profile = requireActiveProfile(selectOpenServProfile());
@@ -19,11 +20,11 @@ console.log('Scenario: contest the incorrect INV-B subtotal without providing th
 console.log('No wallet key, webhook token, synthetic task ID or payment is printed.');
 if (!isExecute) {
   console.log('DRY RUN ONLY. No OpenServ request or GenLayer transaction sent.');
-  console.log('To create ONE NEW isolated E2E task, use SERVJURY_AGENT_PROFILE=e2e-v2 and the dedicated E2E V2 workflow. The legacy workflow cannot be triggered by this script.');
+  console.log('To create ONE NEW isolated E2E task, use SERVJURY_AGENT_PROFILE=e2e-v3 and the dedicated E2E V3 workflow. The legacy workflow cannot be triggered by this script.');
   process.exit(0);
 }
-if (profile.id!=='e2e-v2') {
-  throw new Error('Refusing to trigger legacy OpenServ workflow, including the already-decided Task 750591. Set SERVJURY_AGENT_PROFILE=e2e-v2 for a separately provisioned workflow.');
+if (profile.id!=='e2e-v3') {
+  throw new Error('Refusing to trigger legacy OpenServ workflow, including the already-decided Task 750591. Set SERVJURY_AGENT_PROFILE=e2e-v3 for a separately provisioned workflow.');
 }
 if (process.env.SERVJURY_CONFIRM_TASK !== 'RUN_ONE_TEST_TASK') {
   throw new Error('Explicit one-shot consent required: SERVJURY_CONFIRM_TASK=RUN_ONE_TEST_TASK');
@@ -37,7 +38,7 @@ const provisioned=getProvisionedInfo(profile.agentName,profile.workflowName);
 const workflowId=Number(provisioned?.workflowId);
 const agentId=Number(provisioned?.agentId);
 if (!Number.isSafeInteger(workflowId)||workflowId<=0||
-    !Number.isSafeInteger(agentId)||agentId<=0||[14061,14062].includes(workflowId)||[4953,4954].includes(agentId)) {
+    !Number.isSafeInteger(agentId)||agentId<=0||[14061,14062,14063].includes(workflowId)||[4953,4954,4955].includes(agentId)) {
   throw new Error('Isolated E2E OpenServ agent/workflow are missing or equal the historical workflow. Provision the e2e profile first; do not reuse Task 750591.');
 }
 if(process.env.OPENSERV_WORKFLOW_ID &&
@@ -45,6 +46,8 @@ if(process.env.OPENSERV_WORKFLOW_ID &&
   throw Error('OPENSERV_WORKFLOW_ID does not match isolated E2E provisioning; refusing trigger.');
 }
 console.log('Isolated E2E workflow selected:',JSON.stringify({workflowId,agentId}));
+await assertV3AgentLocallyReady({workflowId,agentId});
+console.log('V3 Agent local process and /health checked. This does NOT verify remote proxy. Confirm Tunnel connected in Terminal A.');
 const { PlatformClient } = await import('@openserv-labs/client');
 const client = new PlatformClient({ apiKey: userApiKey });
 // At-most-once E2E trigger attempt per isolated workflow. A timeout may
