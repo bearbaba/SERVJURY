@@ -11,7 +11,7 @@ Mission window listed in portal: **9–23 November 2026**. The operator's dashbo
 | Real GenLayer proof | [On-chain evidence ledger](ONCHAIN_EVIDENCE.md), three finalized successful adjudications and persisted reads | **Complete for synthetic acceptance fixtures** |
 | Reproducible user interface | [Local demo](../demo/) and [skill](../SKILL.md), fixtures labeled honestly | Local automated tests pass |
 | Robust bridge | [OpenServ bridge](../src/openserv-bridge.mjs) rejects mismatched evidence and fails closed on transport errors | Isolated tests pass |
-| Authenticated partner round trip | [Actual OpenServ task → GenLayer → same OpenServ task log](OPENSERV_LIVE_ACCEPTANCE.md) | **Not yet independently run** |
+| Authenticated partner round trip | Live task #750591 yielded an OpenServ task-log receipt with GenLayer DECIDED/REWORK; task not Completed. V1/V2 are not closed-loop passes. | **Partial live evidence; full E2E still open** |
 | Public clean repository | [SERVJURY GitHub](https://github.com/bearbaba/SERVJURY), tests, documents and CI | Published |
 | Edited 45-second video | Actual OpenServ task/log, real GenLayer tx/readback, official three logos, polished motion | **Not yet delivered** |
 | Security & claim discipline | Dedicated test signer, no escrow claims, no unverified OpenServ sync claims | Code guards; live verification outstanding |
@@ -22,7 +22,7 @@ Mission window listed in portal: **9–23 November 2026**. The operator's dashbo
 
 **One-liner:** When an AI agent's delivery is contested, SERVJURY submits the fixed task requirements and evidence to GenLayer's AI jury and returns an auditable verdict to the original OpenServ task.
 
-**Technical proof:** On GenLayer Studio, three independent test scenarios finalized with persisted results: ACCEPT for a correct invoice, REWORK for a mathematically incorrect invoice, and UNVERIFIABLE for a claim without supporting audio/transcript evidence. The adapter uses the authenticated OpenServ task/workspace context to derive a stable case ID, and only writes the on-chain verdict back to its task log after finality and data matching. The OpenServ writeback itself **still needs an authenticated live acceptance run**.
+**Technical proof:** On GenLayer Studio, three independent test scenarios finalized with persisted results: ACCEPT for a correct invoice, REWORK for a mathematically incorrect invoice, and UNVERIFIABLE for a claim without supporting audio/transcript evidence. The adapter uses the authenticated OpenServ task/workspace context to derive a stable case ID, and only writes the on-chain verdict back to its task log after finality and data matching. The authenticated OpenServ writeback was observed on task #750591, but that task did not reach verified completion; an end-to-end closed-loop pass remains outstanding.
 
 **Limitations that must remain truthful:** Studio fixture task IDs are not OpenServ task IDs. No funds are held or paid. The cases do not prove third-party evidence provenance; Case B's supplied evidence already states the correct total. Five *initial* validators does not prove five matching individual votes. Do not cite private-key or platform API credentials.
 
