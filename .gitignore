@@ -12,3 +12,6 @@ __pycache__/
 
 # At-most-once marker for the isolated E2E webhook session
 .servjury-e2e-trigger-attempt-*.lock
+
+# Local V3 Agent liveness marker (contains no secrets)
+.servjury-agent-ready-v3.json
