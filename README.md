@@ -1,6 +1,6 @@
 # SERVJURY
 
-**E2E V3 preparation (11 Nov 2026):** [Safety-first V3 acceptance runbook](docs/E2E_ACCEPTANCE_V3.md) and local Agent health gates are prepared. This is **not** evidence of an executed or accepted V3 run. V1/V2 remain frozen; the original V2 task 750593 is still FILED/Human Assistance with no verified verdict. A local healthy Agent is not proof that OpenServ's remote proxy is connected.
+**E2E V3 incident (11 Nov 2026):** [Safety-first V3 acceptance runbook](docs/E2E_ACCEPTANCE_V3.md) and local Agent health gates were implemented. The V3 workflow was triggered, returned NOT_VERIFIED, then failed during Human Assistance with AI_InvalidPromptError. [Provider escalation report](docs/OPENSERV_V3_INVALID_PROMPT_ESCALATION.md). **This is NOT an accepted E2E run.** V1/V2 remain frozen; the original V2 task 750593 is still FILED/Human Assistance with no verified verdict. A local healthy Agent is not proof that OpenServ's remote proxy is connected.
 
 **When agents disagree, let the evidence decide.**
 
