@@ -54,6 +54,8 @@ agent.addCapability({
     const taskKey = JSON.stringify([workflowId, taskId]);
     if (completedInProcess.has(taskKey)) return completedInProcess.get(taskKey);
     if (inFlight.has(taskKey)) return inFlight.get(taskKey);
+    // Diagnostic stage strings are fixed constants. Never print raw errors or webhook data.
+    let reviewStage = 'openserv-platform-task-read';
     const work = (async () => {
       // A canonical task is confirmed by the authenticated platform API,
       // not by per-invocation update tokens from the agent runtime. The task
@@ -61,6 +63,7 @@ agent.addCapability({
       const liveTask = await new PlatformClient({ apiKey: userApiKey }).tasks.get({
         workflowId, id: taskId,
       });
+      reviewStage = 'openserv-task-identity-check';
       verifyLivePlatformTask(liveTask, {
         taskId, agentId: activeAgentId,
         expectedDescription: action.task.description,
@@ -68,9 +71,12 @@ agent.addCapability({
       // The OpenServ orchestration model added a calculated verdict to args
       // during the first live run. Ignore args as evidence authority; only
       // use the original unmodified webhook event from the authenticated task.
+      reviewStage = 'openserv-webhook-evidence-check';
       const input = originalWebhookEvidence(action, taskId);
+      reviewStage = 'genlayer-review-start';
       const receipt = await runTaskReview({
         workspaceId: workflowId, taskId, input,
+        onStage: (stage) => { reviewStage = stage; },
         allowFirstFiling: process.env.ALLOW_FIRST_FILING === '1',
         readCase: readLiveCase,
         fileCase: fileLiveCase,
@@ -79,11 +85,13 @@ agent.addCapability({
       // E2E completion is opt-in and requires fresh, strictly verified GenLayer
       // filing AND adjudication hashes. In particular, a read-only recovery of
       // old task 750591 cannot satisfy this condition.
+      reviewStage = 'openserv-verified-output-build';
       const verifiedOutput=allowsVerifiedTaskCompletion(profile)
         ? buildVerifiedTaskOutput(receipt,{workflowId,taskId})
         : null;
       // The deterministic receipt is the partner writeback. Never output a
       // verdict unless it was read from a finalized on-chain state.
+      reviewStage = 'openserv-task-log-write';
       const body = JSON.stringify(receipt);
       try {
         await this.addLogToTask({
@@ -105,7 +113,9 @@ agent.addCapability({
         // reviewed. An ACK without an explicit task readback is not completion.
         // Network errors here are UNCERTAIN side effects; never retry.
         try {
+          reviewStage = 'openserv-task-completion';
           await this.completeTask({workspaceId:workflowId,taskId,output:verifiedOutput});
+          reviewStage = 'openserv-completion-readback';
           const detail=await this.getTaskDetail({workspaceId:workflowId,taskId});
           confirmCompletedTask(detail,{workflowId,taskId,output:verifiedOutput});
         } catch {
@@ -133,6 +143,13 @@ agent.addCapability({
       // The SDK logs the entire task action, including update tokens, on an
       // uncaught capability exception. Return a safe, non-verdict failure
       // instead; never pretend the chain decision has been recorded.
+      // A stable stage classification narrows failures without leaking response bodies,
+      // webhook tokens, SDK action objects or private keys.
+      console.error('SERVJURY_REVIEW_DIAGNOSTIC',JSON.stringify({
+        workflowId,taskId,stage:reviewStage,
+        submittedTxHashPresent:/^0x[0-9a-fA-F]{64}$/.test(String(error?.txHash||'')),
+        status:'NOT_VERIFIED'
+      }));
       console.error('SERVJURY review not finalized; no verified verdict written to task log.');
       return JSON.stringify({
         status: 'NOT_VERIFIED',
