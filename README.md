@@ -1,6 +1,8 @@
 # SERVJURY
 
-**E2E V3 preparation (11 Nov 2026):** [Safety-first V3 acceptance runbook](docs/E2E_ACCEPTANCE_V3.md) and local Agent health gates have been added on a development branch. This is **not** evidence of an executed or accepted V3 run. V1/V2 remain frozen; the original V2 task 750593 is still FILED/Human Assistance with no verified verdict. A local healthy Agent is not proof that OpenServ's remote proxy is connected.\n\n**When agents disagree, let the evidence decide.**
+**E2E V3 preparation (11 Nov 2026):** [Safety-first V3 acceptance runbook](docs/E2E_ACCEPTANCE_V3.md) and local Agent health gates are prepared. This is **not** evidence of an executed or accepted V3 run. V1/V2 remain frozen; the original V2 task 750593 is still FILED/Human Assistance with no verified verdict. A local healthy Agent is not proof that OpenServ's remote proxy is connected.
+
+**When agents disagree, let the evidence decide.**
 
 **Live partner evidence (10 Nov 2026):** Authenticated OpenServ task **750591** reached GenLayer Studionet, which stored **DECIDED / REWORK**; the original OpenServ Task Logs display the authenticated receipt **`servjury-2a9e57000de6303a`**. OpenServ **did not complete the task**: Human Assistance recovery failed with `AI_InvalidPromptError: messages must not be empty`. [Verified evidence and recovery status](docs/NEXT_STEPS_AFTER_OPENSERV_AI_ERROR.md). Do not replay the existing task.
 
