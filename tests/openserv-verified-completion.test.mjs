@@ -37,7 +37,7 @@ test('status DONE is not accepted without a matching persisted task output',()=>
     assert.throws(()=>confirmCompletedTask(detail,{...ctx,output}),/not confirmed/);
   }
 });
-test('legacy, E2E V1/V2 remain frozen; only fresh V3 can complete with explicit opt-in',()=>{
+test('legacy and E2E V1/V2/V3 remain frozen after attempted run; V3 completion permission stays opt-in',()=>{
   const legacy=selectOpenServProfile({});
   const archive=selectOpenServProfile({SERVJURY_AGENT_PROFILE:'e2e'});
   const archivedV2=selectOpenServProfile({SERVJURY_AGENT_PROFILE:'e2e-v2'});
@@ -52,7 +52,7 @@ test('legacy, E2E V1/V2 remain frozen; only fresh V3 can complete with explicit 
   assert.notEqual(next.agentName,legacy.agentName);
   assert.throws(()=>requireActiveProfile(archive),/frozen/);
   assert.throws(()=>requireActiveProfile(archivedV2),/frozen/);
-  assert.equal(requireActiveProfile(next),next);
+  assert.throws(()=>requireActiveProfile(next),/frozen/);
   assert.equal(allowsVerifiedTaskCompletion(legacy,{SERVJURY_COMPLETE_VERIFIED_TASK:'1'}),false);
   assert.equal(allowsVerifiedTaskCompletion(archive,{SERVJURY_COMPLETE_VERIFIED_TASK:'1'}),false);
   assert.equal(allowsVerifiedTaskCompletion(archivedV2,{SERVJURY_COMPLETE_VERIFIED_TASK:'1'}),false);
